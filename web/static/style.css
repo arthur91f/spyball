@@ -432,3 +432,40 @@ fieldset:disabled .choice label {
     border-radius: 50%;
     background: var(--team);
 }
+
+.site-header nav a {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.story {
+    white-space: pre-line;
+    font-style: italic;
+}
+
+.camps {
+    list-style: none;
+    padding: 0;
+}
+
+.camps li {
+    border-left: 0.3rem solid var(--team);
+    padding-left: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.camps .badge {
+    margin-right: 0.25rem;
+}
+
+.theme-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: var(--space);
+}
+
+.theme-picker select {
+    flex: 1;
+}

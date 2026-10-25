@@ -1,0 +1,85 @@
+{{define "title"}}{{t "rules.title"}} · {{t "app.name"}}{{end}}
+
+{{define "content"}}
+<h1>{{t "rules.title"}}</h1>
+
+{{if gt (len .Themes) 1}}
+<form method="get" action="/rules" class="theme-picker">
+    <label for="theme">{{t "rules.theme"}}</label>
+    <select id="theme" name="theme" onchange="this.form.submit()">
+        {{range .Themes}}<option value="{{.ID}}"{{if eq .ID $.Theme.ID}} selected{{end}}>{{.Name}}</option>{{end}}
+    </select>
+    <noscript><button type="submit" class="secondary small">{{t "rules.show"}}</button></noscript>
+</form>
+{{end}}
+
+<section class="card">
+    <h2>{{.Theme.Name}}</h2>
+    {{with .Theme.Story}}<p class="story">{{.}}</p>{{end}}
+    <p>{{t "rules.goal"}}</p>
+</section>
+
+<section class="card">
+    <h2>{{t "rules.camps.title"}}</h2>
+    <ul class="camps">
+        <li class="team-blue"><span class="badge team-blue">{{.Blue.Name}}</span> {{.Blue.Description}}</li>
+        <li class="team-red"><span class="badge team-red">{{.Red.Name}}</span> {{.Red.Description}}</li>
+    </ul>
+    <p>{{t "rules.camps.balance"}}</p>
+    <h3><span class="badge team-neutral">{{.Neutral.Name}}</span></h3>
+    {{with .Neutral.Description}}<p>{{.}}</p>{{end}}
+    <ul>
+        <li>{{tf "rules.camps.white" .Blue.Name .Red.Name}}</li>
+        {{with .AllyOfEveryone}}<li>{{tf "rules.camps.ally_of_everyone" .}}</li>{{end}}
+        {{with .EnemyOfEveryone}}<li>{{tf "rules.camps.enemy_of_everyone" .}}</li>{{end}}
+    </ul>
+</section>
+
+<section class="card">
+    <h2>{{t "rules.role.title"}}</h2>
+    <ul>
+        <li>{{t "rules.role.character"}}</li>
+        <li>{{t "rules.role.sign"}}</li>
+        <li>{{t "rules.role.white_signs"}}</li>
+        <li>{{t "rules.role.clues"}}</li>
+    </ul>
+    <p>{{t "rules.role.login"}}</p>
+</section>
+
+<section class="card">
+    <h2>{{t "rules.party.title"}}</h2>
+    <ul>
+        <li>{{t "rules.party.observe"}}</li>
+        <li>{{t "rules.party.reveal"}}</li>
+        <li>{{t "rules.party.discretion"}}</li>
+        <li>{{t "rules.party.guesses"}}</li>
+    </ul>
+</section>
+
+<section class="card">
+    <h2>{{t "rules.score.title"}}</h2>
+    <ul>
+        <li>{{t "rules.score.right"}}</li>
+        <li>{{t "rules.score.wrong"}}</li>
+        <li>{{t "rules.score.manual"}}</li>
+    </ul>
+    <p>{{t "rules.score.relations"}}</p>
+    <ul>
+        <li>{{t "rules.score.same_camp"}}</li>
+        <li>{{tf "rules.score.neutral" .Neutral.Name}}</li>
+        <li>{{t "rules.score.white"}}</li>
+        {{if .AllyOfEveryone}}<li>{{t "rules.score.special"}}</li>{{end}}
+    </ul>
+    <p>{{tf "rules.score.teams" .Neutral.Name .NeutralFactor}}</p>
+</section>
+
+{{if .Cast}}
+<section class="card">
+    <h2>{{t "rules.cast.title"}}</h2>
+    <p class="muted">{{tf "rules.cast.help" .SetupName}}</p>
+    {{range .Cast}}
+    <p><span class="camp team-{{.Color}}">{{.Label}}</span> : {{range $i, $name := .Names}}{{if $i}}, {{end}}{{$name}}{{end}}</p>
+    {{end}}
+</section>
+{{end}}
+{{end}}

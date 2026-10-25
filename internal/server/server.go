@@ -95,6 +95,7 @@ func New(catalog *config.Catalog, st *store.Store, opts Options) (*Server, error
 	s.registerAdmin(mux)
 	s.registerPlayer(mux)
 	s.registerResults(mux)
+	s.registerRules(mux)
 
 	// Rejects cross-site form submissions (CSRF) based on the browser's Origin / Sec-Fetch-Site headers.
 	s.handler = http.NewCrossOriginProtection().Handler(mux)

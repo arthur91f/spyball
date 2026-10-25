@@ -1,5 +1,7 @@
 # Thème d'origine : un gala d'ONG infiltré par les espions de toutes les nations.
 #
+# story      : récit affiché en tête des règles ; une ligne vide sépare deux paragraphes.
+#
 # teams      : nom des camps (blue, red, neutral) ; « member » désigne un membre du camp
 #              et remplace {blue}, {red} ou {neutral} dans les signes.
 # characters : personnages par couleur. L'emplacement <couleur>-N reçoit le N-ième personnage de sa couleur.
@@ -9,10 +11,11 @@
 #              Les blancs n'ont pas de liste : ils tirent un signe bleu et un signe rouge.
 
 name: Le bal des nations
-story: |
+story: >-
   Lors d'un sommet international, l'ONG P.L.S. (Pour La Santé) organise un gala au profit du
   Fonds pour l'Enfant et les Thérapies Énergétiques. Sous couvert de soutenir cette noble cause,
   les grandes puissances y voient l'occasion rêvée d'infiltrer leurs espions.
+
   Pendant la soirée, chaque espion devra retrouver ses alliés et débusquer les agents des puissances rivales.
 
 teams:

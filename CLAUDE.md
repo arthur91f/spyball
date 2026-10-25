@@ -98,6 +98,10 @@ Les règles spéciales doivent être décrites dans la config (YAML), pas codée
 - un joueur qui a oublié son personnage demande à l'admin de « réinitialiser » sa connexion (il se reconnecte alors
   avec son seul nom). La page admin indique seulement qui s'est déjà connecté, jamais les rôles.
 
+**Règles** (`/rules`, lien dans l'en-tête de chaque page) : texte générique dans `rules.*` de la locale, habillé par
+le thème (récit `story`, noms et descriptions des camps, noms des rôles spéciaux). Thème affiché : `?theme=<id>`, sinon
+celui de la partie, sinon le premier. Après le tirage, la page liste les personnages en jeu par couleur, jamais qui les incarne.
+
 **Résultats** (`/results`) : visibles par tous une fois la partie clôturée (avant, la page dit seulement d'attendre).
 Classement des camps (gagnant mis en avant, pondération des neutres affichée), classement des joueurs avec leur personnage
 et le détail de leurs suppositions (✓/✗), liste des points manuels. L'admin connecté y ajoute ou annule des points
@@ -198,5 +202,5 @@ Chaque étape est livrée testée, dans un commit à part.
 - [x] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
 - [x] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
 - [x] 7. Page résultats : rôles dévoilés, suppositions, scores, ajout de points manuels par l'admin.
-- [ ] 8. Page règles, rendue selon le thème.
+- [x] 8. Page règles, rendue selon le thème.
 - [ ] 9. Finitions : affichage mobile, test de bout en bout d'une partie complète, README (lancement, ajout d'un thème).

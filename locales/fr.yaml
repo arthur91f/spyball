@@ -67,6 +67,67 @@ error:
 format:
   decimal_separator: ","
 
+nav:
+  rules: Règles
+
+rules:
+  title: Règles du jeu
+  theme: Thème
+  show: Afficher
+  goal: >-
+    Chaque invité reçoit en secret un personnage et un camp. Pendant toute la soirée, sans en avoir l'air,
+    tu dois retrouver tes alliés et démasquer tes ennemis. À la fin, tout est dévoilé et on compte les points.
+  camps:
+    title: Les camps
+    balance: >-
+      Les deux camps comptent autant de joueurs. Les autres joueurs sont neutres, au rôle un peu à part :
+    white: >-
+      Les non-alignés reçoivent un signe de chaque camp et choisissent, avant la fin de la partie,
+      de rejoindre les %s, les %s, ou de rester neutres.
+    ally_of_everyone: "%s : allié de tout le monde. Tout le monde a intérêt à le désigner comme allié."
+    enemy_of_everyone: "%s : ennemi de tout le monde. Tout le monde a intérêt à le désigner comme ennemi… s'il ne se fait pas passer pour un allié."
+  role:
+    title: Ton rôle
+    character: Un personnage, qui indique ton camp. Garde-le secret !
+    sign: >-
+      Un signe d'appel : un comportement à glisser régulièrement dans la soirée pour que tes alliés te repèrent.
+      Pas trop souvent : les joueurs attentifs pourraient se méfier.
+    white_signs: Les non-alignés ont deux signes, un pour chaque camp, et choisissent par qui se faire reconnaître.
+    clues: Des indices sur quelques autres personnages et leur signe, pour t'aider à les repérer.
+    login: >-
+      Pour découvrir ton rôle, connecte-toi avec ton nom. Le site te révèle ton personnage : retiens-le,
+      il te servira de mot de passe pour te reconnecter.
+  party:
+    title: Pendant la soirée
+    observe: Observe les autres invités et repère qui fait les signes de tes indices.
+    reveal: >-
+      Quand tu penses avoir trouvé un allié, à toi de voir comment te dévoiler : un mot glissé à l'oreille,
+      un message sur un bout de papier…
+    discretion: >-
+      Reste discret : un joueur surpris à parler du jeu peut être dénoncé publiquement,
+      et l'organisateur pourra le pénaliser à la fin.
+    guesses: >-
+      Sur le site, indique pour chaque joueur si tu penses qu'il est ton allié ou ton ennemi.
+      Tu peux changer d'avis jusqu'à la clôture de la partie.
+  score:
+    title: Le décompte des points
+    right: "+1 point par allié ou ennemi correctement identifié ;"
+    wrong: "−1 point par allié désigné comme ennemi ou ennemi désigné comme allié ;"
+    manual: "des points donnés par l'organisateur : défis réussis, dénonciations publiques…"
+    relations: "Qui est allié de qui :"
+    same_camp: deux joueurs du même camp sont alliés, deux joueurs de camps différents sont ennemis ;
+    neutral: "les %s restés neutres sont des ennemis pour les deux camps, et des alliés entre eux ;"
+    white: un non-aligné qui a rejoint un camp compte entièrement comme membre de ce camp ;
+    special: les rôles spéciaux ci-dessus font exception (l'allié de tout le monde l'emporte sur l'ennemi de tout le monde).
+    teams: >-
+      Le score d'un camp est la somme des scores de ses joueurs. Moins nombreux, les %s voient
+      leur score multiplié par %d divisé par leur nombre. Le camp qui a le plus de points gagne !
+  cast:
+    title: Les personnages de cette partie
+    help: "Configuration « %s ». Qui les incarne ? C'est à toi de le découvrir."
+    white: Non-alignés
+    yellow: Rôles spéciaux
+
 results:
   title: Résultats
   link: Voir les résultats
