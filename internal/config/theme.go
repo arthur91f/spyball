@@ -185,8 +185,3 @@ func (t *Theme) charactersWithRule(r Rule) []Character {
 	}
 	return chars
 }
-
-// NormalizeName is the form under which character and player names are compared: trimmed, case-insensitive.
-func NormalizeName(name string) string {
-	return strings.ToLower(strings.Join(strings.Fields(name), " "))
-}

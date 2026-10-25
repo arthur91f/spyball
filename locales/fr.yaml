@@ -18,7 +18,7 @@ login:
   character: Ton personnage
   character_help: >-
     Laisse vide à ta première connexion : on te dévoilera ton personnage.
-    Ensuite, il te servira de mot de passe.
+    Ensuite, il te servira de mot de passe (majuscules, accents, espaces et ponctuation sont ignorés).
   submit: Entrer
 
 role:

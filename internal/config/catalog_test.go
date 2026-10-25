@@ -150,6 +150,7 @@ func TestLoadRejectsInvalidThemes(t *testing.T) {
 		wantErr string
 	}{
 		{"duplicate character", func(s string) string { return strings.Replace(s, "name: B2", "name: \" b1 \"", 1) }, "duplicate character name"},
+		{"duplicate once normalized", func(s string) string { return strings.Replace(s, "name: B2", "name: \"b.1\"", 1) }, "duplicate character name"},
 		{"unknown placeholder", func(s string) string { return strings.Replace(s, "{red}", "{green}", 1) }, "unknown placeholder {green}"},
 		{"missing team", func(s string) string {
 			return strings.Replace(s, "  neutral: {name: Neutres, member: neutre}\n", "", 1)

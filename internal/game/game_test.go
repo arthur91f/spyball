@@ -57,6 +57,12 @@ func TestAddPlayer(t *testing.T) {
 	if _, err := g.AddPlayer("   "); !errors.Is(err, ErrEmptyName) {
 		t.Error("empty name: want error")
 	}
+	if _, err := g.AddPlayer("ALICE-MARTIN"); !errors.Is(err, ErrDuplicateName) {
+		t.Error("duplicate name (punctuation): want error")
+	}
+	if _, err := g.AddPlayer(" .-' "); !errors.Is(err, ErrEmptyName) {
+		t.Error("punctuation-only name: want error")
+	}
 
 	bob, _ := g.AddPlayer("Bob")
 	if err := g.RemovePlayer(alice.ID); err != nil {
@@ -308,5 +314,26 @@ func TestLogin(t *testing.T) {
 	}
 	if err := g.ResetLogin(p.ID); !errors.Is(err, ErrWrongPhase) {
 		t.Errorf("reset login after close: err = %v, want ErrWrongPhase", err)
+	}
+}
+
+func TestLoginIsForgivingOnCharacterName(t *testing.T) {
+	g := New()
+	_, _ = g.AddPlayer("Rémi")
+	g.Phase = PhaseRunning
+	remi := g.Players[0]
+	remi.Character, remi.Revealed = "ONG P.L.S.", true
+
+	for _, tt := range []struct{ name, character string }{
+		{"Remi", "ong P.lS"},
+		{"Rémi", "ONG P.L.S."},
+		{"remi", "o n g p l s"},
+	} {
+		if _, err := g.Login(tt.name, tt.character); err != nil {
+			t.Errorf("Login(%q, %q): %v", tt.name, tt.character, err)
+		}
+	}
+	if _, err := g.Login("Remi", "ONG"); !errors.Is(err, ErrWrongCharacter) {
+		t.Errorf("partial character: err = %v, want ErrWrongCharacter", err)
 	}
 }

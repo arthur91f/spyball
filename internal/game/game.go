@@ -115,13 +115,14 @@ func (g *Game) PlayerByName(name string) (*Player, bool) {
 	return nil, false
 }
 
-// AddPlayer registers a guest. Names must be unique and are only accepted before the draw.
+// AddPlayer registers a guest. Names must be unique (compared with config.NormalizeName, so "Rémi"
+// and "remi" are the same) and are only accepted before the draw.
 func (g *Game) AddPlayer(name string) (*Player, error) {
 	if err := g.requirePhase(PhaseSetup); err != nil {
 		return nil, err
 	}
 	name = strings.Join(strings.Fields(name), " ")
-	if name == "" {
+	if config.NormalizeName(name) == "" { // e.g. only punctuation: could not be told apart from another name
 		return nil, ErrEmptyName
 	}
 	if _, exists := g.PlayerByName(name); exists {

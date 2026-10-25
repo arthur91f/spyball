@@ -91,6 +91,8 @@ Les règles spéciales doivent être décrites dans la config (YAML), pas codée
 **Authentification des joueurs** :
 - première connexion : le joueur donne son nom (choisi dans la liste saisie par l'admin) ; le site lui révèle le nom de son personnage ;
 - connexions suivantes : nom + nom du personnage. Le personnage étant secret, il sert de mot de passe.
+  La saisie est tolérante (`config.NormalizeName`) : majuscules, accents, cédilles, espaces et ponctuation sont ignorés
+  (« ong P.lS » vaut « ONG P.L.S. »). Les noms de joueurs et de personnages doivent donc rester distincts une fois normalisés ;
 - session par cookie ; un joueur déconnecté ne peut plus voir son rôle. La session n'est valable que tant que le joueur
   garde ce personnage : annuler le tirage ou commencer une nouvelle partie déconnecte tout le monde ;
 - un joueur qui a oublié son personnage demande à l'admin de « réinitialiser » sa connexion (il se reconnecte alors
