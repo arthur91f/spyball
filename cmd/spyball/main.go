@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,21 +13,35 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/arthur91f/spyball"
+	"github.com/arthur91f/spyball/internal/config"
 	"github.com/arthur91f/spyball/internal/server"
 )
 
 func main() {
 	addr := flag.String("addr", ":8080", "HTTP listen address")
+	contentDir := flag.String("content", "", "directory with themes/, setups/ and locales/ (default: content built into the binary)")
+	lang := flag.String("lang", "fr", "interface language, a file of locales/")
 	flag.Parse()
 
-	if err := run(*addr); err != nil {
+	if err := run(*addr, *contentDir, *lang); err != nil {
 		slog.Error("server stopped", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run(addr string) error {
-	srv, err := server.New()
+func run(addr, contentDir, lang string) error {
+	var content fs.FS = spyball.Content
+	if contentDir != "" {
+		content = os.DirFS(contentDir)
+	}
+	catalog, err := config.Load(content)
+	if err != nil {
+		return err
+	}
+	slog.Info("content loaded", "themes", len(catalog.Themes), "setups", len(catalog.Setups), "locales", len(catalog.Locales))
+
+	srv, err := server.New(catalog, lang)
 	if err != nil {
 		return err
 	}

@@ -1,0 +1,122 @@
+# Thème d'origine : un gala d'ONG infiltré par les espions de toutes les nations.
+#
+# teams      : nom des camps (blue, red, neutral) ; « member » désigne un membre du camp
+#              et remplace {blue}, {red} ou {neutral} dans les signes.
+# characters : personnages par couleur. L'emplacement <couleur>-N reçoit le N-ième personnage de sa couleur.
+#              Les jaunes sont choisis selon leur règle (rule) : ally_of_everyone ou enemy_of_everyone.
+#              Les noms doivent être uniques : ils servent de mot de passe aux joueurs.
+# signs      : signes tirés au hasard (sans doublon) pour chaque couleur.
+
+name: Le bal des nations
+story: |
+  Lors d'un sommet international, l'ONG P.L.S. (Pour La Santé) organise un gala au profit du
+  Fonds pour l'Enfant et les Thérapies Énergétiques. Sous couvert de soutenir cette noble cause,
+  les grandes puissances y voient l'occasion rêvée d'infiltrer leurs espions.
+  Pendant la soirée, chaque espion devra retrouver ses alliés et débusquer les agents des puissances rivales.
+
+teams:
+  blue:
+    name: Démocraties du monde libre
+    member: démocrate
+    description: >-
+      Leurs espions se reconnaissent par la parole : traquez les tics de langage
+      et les drôles de façons de s'exprimer.
+  red:
+    name: Puissances autoritaires
+    member: autocrate
+    description: >-
+      Méfiants envers les beaux discours, leurs espions communiquent par gestes :
+      soyez attentifs aux postures, mimiques et manies étranges.
+  neutral:
+    name: Non-alignés
+    member: non-aligné
+    description: >-
+      Ils tirent leur épingle du jeu à leur manière et forment un camp à part
+      pour le décompte des points.
+
+characters:
+  blue:
+    - name: USA
+    - name: Royaume-Uni
+    - name: Allemagne
+    - name: France
+    - name: Canada
+    - name: Japon
+  red:
+    - name: Russie
+    - name: Chine
+    - name: Corée du Nord
+    - name: Iran
+    - name: Biélorussie
+    - name: Cuba
+  white:
+    - name: Inde
+      description: >-
+        Vous êtes courtisé par tout le monde. Avant la fin de la soirée, choisissez de rejoindre
+        les Démocraties, les Puissances autoritaires, ou de rester non aligné.
+    - name: Brésil
+      description: >-
+        Vous êtes courtisé par tout le monde. Avant la fin de la soirée, choisissez de rejoindre
+        les Démocraties, les Puissances autoritaires, ou de rester non aligné.
+    - name: Turquie
+      description: >-
+        Vous êtes courtisé par tout le monde. Avant la fin de la soirée, choisissez de rejoindre
+        les Démocraties, les Puissances autoritaires, ou de rester non aligné.
+  yellow:
+    - name: ONG P.L.S.
+      rule: ally_of_everyone
+      description: >-
+        Vous organisez le gala et savez bien que la plupart des invités ne sont pas là pour la cause.
+        Tout le monde a intérêt à vous désigner comme allié.
+    - name: Anonymous
+      rule: enemy_of_everyone
+      description: >-
+        Vous avez espionné presque tout le monde. Tout le monde a intérêt à vous désigner comme ennemi :
+        faites-vous passer pour un allié.
+
+signs:
+  blue:
+    - utiliser des sigles
+    - utiliser des onomatopées
+    - dire tout le temps « euh »
+    - chanter
+    - faire des bruits de bouche (siffler…)
+    - utiliser des anglicismes
+    - être grossier, jurer
+    - raconter des anecdotes
+    - dire « canopé » au lieu de « canapé » et « roser » au lieu de « poser »
+    - dire « père » au lieu de « verre » et « boire » au lieu de « voir »
+    - utiliser des mots qui riment avec « tristitude »
+    - utiliser des mots qui riment avec « fromage »
+  red:
+    - s'exprimer en mimant
+    - avoir les mains sur les hanches
+    - faire tomber et ramasser quelque chose
+    - faire des clins d'œil
+    - faire des sourires en coin
+    - se gratter le nez
+    - se gratter la tête, se recoiffer
+    - s'étirer les doigts, les mains
+    - hausser les sourcils ou les épaules
+    - éteindre ou allumer la lumière « par erreur »
+    - croiser les bras
+    - lever le petit doigt en buvant
+    - se moucher
+    - faire des checks de plus de deux mouvements
+  white:
+    - fredonner un air connu
+    - commencer ses phrases par « en vrai »
+    - tapoter du pied en rythme
+    - regarder l'heure ostensiblement
+  yellow:
+    - faire chanter un {red}
+    - faire siffler un {red}
+    - faire dire des grossièretés à un {red}
+    - mettre un {red} au défi d'inverser deux mots
+    - faire faire des grimaces à un {blue}
+    - faire faire des clins d'œil à un {blue}
+    - faire faire un moonwalk ou twerker un {blue}
+    - faire faire un check de plus de deux mouvements à un {blue}
+    - lancer un « tu préfères » avec au moins 4 participants et 2 tours
+    - lancer un concours de blagues avec au moins 4 participants et 2 tours
+    - lancer un concours de mime avec au moins 4 participants et 2 tours

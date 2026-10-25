@@ -1,0 +1,8 @@
+# Textes de l'interface. Les clés imbriquées s'utilisent avec des points : {{t "home.tagline"}}.
+# Une clé manquante fait échouer le rendu de la page (et les tests).
+
+app:
+  name: Spyball
+
+home:
+  tagline: Trouvez vos alliés, démasquez vos ennemis.

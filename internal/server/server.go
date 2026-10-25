@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path"
 
+	"github.com/arthur91f/spyball/internal/config"
 	"github.com/arthur91f/spyball/web"
 )
 
@@ -20,13 +21,19 @@ const (
 
 // Server is the Spyball HTTP handler.
 type Server struct {
-	mux   *http.ServeMux
-	pages map[string]*template.Template
+	catalog *config.Catalog
+	mux     *http.ServeMux
+	pages   map[string]*template.Template
 }
 
-// New parses the embedded templates and registers the routes.
-func New() (*Server, error) {
-	pages, err := parsePages(web.Templates)
+// New parses the embedded templates, with interface texts taken from the given locale, and registers the routes.
+func New(catalog *config.Catalog, lang string) (*Server, error) {
+	locale, ok := catalog.Locales[lang]
+	if !ok {
+		return nil, fmt.Errorf("unknown locale %q", lang)
+	}
+
+	pages, err := parsePages(web.Templates, template.FuncMap{"t": locale.T})
 	if err != nil {
 		return nil, err
 	}
@@ -36,7 +43,7 @@ func New() (*Server, error) {
 		return nil, err
 	}
 
-	s := &Server{mux: http.NewServeMux(), pages: pages}
+	s := &Server{catalog: catalog, mux: http.NewServeMux(), pages: pages}
 	s.mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	s.mux.HandleFunc("GET /{$}", s.handleHome)
 	return s, nil
@@ -52,7 +59,7 @@ func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 
 // parsePages builds one template set per page, each combining the shared layout
 // with the page file, so pages can all define the same "title" and "content" blocks.
-func parsePages(fsys fs.FS) (map[string]*template.Template, error) {
+func parsePages(fsys fs.FS, funcs template.FuncMap) (map[string]*template.Template, error) {
 	files, err := fs.Glob(fsys, pagesGlob)
 	if err != nil {
 		return nil, err
@@ -63,7 +70,7 @@ func parsePages(fsys fs.FS) (map[string]*template.Template, error) {
 
 	pages := make(map[string]*template.Template, len(files))
 	for _, file := range files {
-		tmpl, err := template.ParseFS(fsys, layoutFile, file)
+		tmpl, err := template.New(path.Base(layoutFile)).Funcs(funcs).ParseFS(fsys, layoutFile, file)
 		if err != nil {
 			return nil, fmt.Errorf("parse %s: %w", file, err)
 		}

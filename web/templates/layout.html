@@ -4,12 +4,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{block "title" .}}Spyball{{end}}</title>
+    <title>{{block "title" .}}{{t "app.name"}}{{end}}</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header class="site-header">
-        <a class="brand" href="/">Spyball</a>
+        <a class="brand" href="/">{{t "app.name"}}</a>
     </header>
     <main class="container">
         {{block "content" .}}{{end}}

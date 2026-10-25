@@ -1,0 +1,32 @@
+# Configuration à 12 joueurs : 4 bleus, 4 rouges, 2 blancs, 2 jaunes.
+# Reprise de la configuration « 12/11/10-44211-0 » des brouillons papier.
+#
+# Chaque emplacement s'écrit <couleur>-<numéro>. Les numéros d'une couleur se suivent à partir de 1.
+#   rule  : uniquement pour les jaunes — ally_of_everyone ou enemy_of_everyone
+#   clues : emplacements dont ce joueur connaît le signe
+
+name: Classique à 12
+description: >-
+  Deux camps de quatre, deux non-alignés qui choisissent leur camp,
+  un allié de tous et un ennemi de tous.
+
+slots:
+  blue-1: { clues: [blue-2, blue-4] }
+  blue-2: { clues: [blue-1, white-1] }
+  blue-3: { clues: [blue-2, blue-4] }
+  blue-4: { clues: [blue-3, white-2] }
+
+  red-1: { clues: [red-2, red-4] }
+  red-2: { clues: [red-1, white-2] }
+  red-3: { clues: [red-2, red-4] }
+  red-4: { clues: [red-3, white-1] }
+
+  white-1: { clues: [blue-1, red-3, white-2] }
+  white-2: { clues: [blue-3, red-1, white-1] }
+
+  yellow-1:
+    rule: ally_of_everyone
+    clues: [white-1, white-2]
+  yellow-2:
+    rule: enemy_of_everyone
+    clues: [blue-1, blue-3, blue-4, red-1, red-3, red-4]

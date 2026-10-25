@@ -102,9 +102,10 @@ internal/server/    handlers HTTP, sessions, rendu des templates
 web/                package Go qui embarque (embed) les templates et les assets
 web/templates/      templates html/template : layout.html + une page par fichier dans pages/
 web/static/         CSS (et JS minimal si vraiment nécessaire)
-themes/<theme>/     un dossier par thème (YAML) : noms des équipes, personnages, listes de signes, règles spéciales
-setups/             configurations de partie, une par nombre de joueurs (YAML) : rôles présents et graphe des indices
-locales/            textes de l'interface (fr.yaml d'abord)
+themes/<id>/theme.yaml   un thème : noms des camps, personnages, listes de signes (format commenté dans le fichier)
+setups/<id>.yaml         une configuration de partie : emplacements, règles jaunes, graphe des indices
+locales/<lang>.yaml      textes de l'interface (fr.yaml d'abord)
+content.go               package racine qui embarque themes/, setups/ et locales/
 old-game-drafts/    brouillons historiques, ignorés par git, simple source d'inspiration
 ```
 
@@ -132,9 +133,17 @@ Séparation importante :
 go run ./cmd/spyball -addr :8080   # lance le serveur sur http://localhost:8080
 go test ./...                      # tests
 go vet ./...
+go run ./cmd/spyball -content .   # lit thèmes/configurations/traductions sur disque au lieu du binaire
 ```
+Le contenu YAML est validé au démarrage (champs inconnus refusés, cohérence des emplacements et des indices,
+noms de personnages uniques…) : le serveur refuse de démarrer et liste toutes les erreurs.
 Chaque page est un fichier `web/templates/pages/<nom>.html` définissant les blocs `title` et `content`,
 rendu dans `layout.html` via `Server.render(w, status, "<nom>", data)`.
+Tout texte d'interface passe par `{{t "cle.sous_cle"}}` ; une clé absente de la locale fait échouer le rendu.
+
+Correspondance thème ↔ configuration : l'emplacement `<couleur>-N` reçoit le N-ième personnage de sa couleur ;
+un emplacement jaune reçoit le premier personnage jaune libre ayant la même `rule`.
+Dans les signes, `{blue}`, `{red}` et `{neutral}` sont remplacés par le `member` du camp correspondant.
 
 ## Feuille de route
 1. **V1** : thème « bal des nations » et une configuration à **12 joueurs**
@@ -145,7 +154,7 @@ rendu dans `layout.html` via `Server.render(w, status, "<nom>", data)`.
 ### Étapes de la V1
 Chaque étape est livrée testée, dans un commit à part.
 - [x] 1. Squelette : module Go, serveur HTTP, layout HTML commun, CSS de base, templates et assets embarqués.
-- [ ] 2. Formats YAML et chargement validé : thème « bal des nations », configuration 12 joueurs, `locales/fr.yaml`.
+- [x] 2. Formats YAML et chargement validé : thème « bal des nations », configuration 12 joueurs, `locales/fr.yaml`.
 - [ ] 3. Logique de jeu (`internal/game`) : état de la partie, tirage aléatoire, relations allié/ennemi, calcul des scores.
 - [ ] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).
 - [ ] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
