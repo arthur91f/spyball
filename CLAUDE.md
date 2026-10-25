@@ -1,36 +1,116 @@
-## Description générale
-Je voudrais faire un jeux d'ambiance pour une soirée. L'idée du jeu est de découvrir qui est dans son équipe et qui est dans l'équipe adverse, avec certains joueur qui endosseront un role neutre asymétrique. L'idée est qu'au début de la soirée, chacun puisse se connecter au serveur et découvrir son role et qu'au cours du jeu chacun puisse entrer ses suppositions. A la fin de la soirée les roles des joueurs sont dévoilés et les points de chacun calculé.
+# Spyball
 
-## Les pages à écrire
-Il faudra donc :
-- une page de login
-- une page affichant le role du joueur et permettant d'entrer les suppositons du joueurs et d'afficher/modifier les suppositions déjà entrée.
-- une page affichant les résultats et les suppositions de chacun accessible uniquement à la fin de la soirée
+Jeu d'ambiance pour soirée (anniversaire, Noël, nouvel an…), joué en parallèle de la soirée via un petit site web local.
+Chaque invité découvre en début de soirée son rôle secret, cherche discrètement ses alliés et ses ennemis pendant la soirée,
+et saisit ses suppositions sur le site. À la fin, l'admin clôture la partie : les rôles sont dévoilés et les scores calculés.
 
-En plus il faudra:
-- une page admin pour entrer la liste des joueurs, définir les paramètres de la partie et terminer le jeu pour cloturer l'entrer des suppositions par les joueurs et permettre l'accès à la page des résultats.
-- une page affichant les règles
+## Règles du jeu (référence)
 
+Ce jeu est l'adaptation web d'un jeu papier joué à un nouvel an (`old-game-drafts/jeux-nouvel-an`).
+Il doit fonctionner pour n'importe quelle soirée et pour **6 à 24 joueurs**.
 
-## A titre informatif
-Des brouillons d'implémentation non définitive ont été écris dans le dossier old-games-drafts. Cela pourra-être utile pour affiner le fichier d'instruction général et je pense que ça pourra être ignoré après.
+### Équipes
+Dans le code on ne parle que de couleurs ; le thème leur donne un nom.
 
-## Les règles du jeu:
-Elles sont globalement décrites dans old-game-drafts/jeux-nouvel-an. Cependant ce jeux était en format papier et ici nous voulons le refaire à l'aide d'un site web et le rendre adaptable aux nombres de joueurs. Il était aussi spécifique à une soirée de nouvel an alors que le jeu devra pouvoir être joué lors de n'importe quel soirée ou goûter d'anniversaire. Il y a donc des adaptation à faire.
+| Couleur  | Rôle dans le jeu | Thème d'origine (« bal des nations ») |
+|----------|------------------|---------------------------------------|
+| `blue`   | Équipe classique | Démocraties du monde libre (OTAN) |
+| `red`    | Équipe classique | Puissances autoritaires |
+| `white`  | Neutre qui **choisit** son camp en fin de partie : `blue`, `red` ou rester neutre | États non alignés (Inde, Brésil…) |
+| `yellow` | Neutre au rôle **asymétrique** avec des règles de score spécifiques | ONG organisatrice (alliée de tous), Anonymous (ennemi de tous) |
 
-## Perspectives futur
-Le jeux a été pensé avec pour thème d'un bal donnée par une ONG auxquels se joignent des espions de toute les nations. Les équipes était donc les démocratie du monde libres contre les puissances autoritaires et des faction non aligné ayant un rôle asymétrique. Néanmoins le thème doit resté au second plan et doit pouvoir être changé facilement. Par exemple les lutins du père Noël contre les disciples du père fouettard pour un thème convenant plus à une soirée de Noël, ou les sorciers contre fantômes pour un thème plus Halloween. Dans un premier temps, on se concentrera sur l'implémentation du thème original mais il faudra qu'on puisse ajouter un autre thème facilement. Pour le code on se contentera de parler d'équipe bleue et rouge et éventuellement d'équipe jaune (les rôles asymétrique) ou blanc pour des rôles pouvant choisir entre rouge et bleu.
+Il y a autant de `blue` que de `red`. Les neutres (`white` + `yellow`) sont la variable d'ajustement.
+Les neutres qui restent neutres forment ensemble une équipe pour le score.
 
-## Adaptation
-J'ai écris quelques configurations de jeu pour un nombre finit de joueur. Il serait bien qu'on puisse dans un second temps trouver au moins une configuration équilibré pour des groupes de joueurs de tout nombre de 6 à 24 joueurs.
+### Ce que reçoit chaque joueur
+- **Un personnage** (ex. « France ») et son équipe.
+- **Un signe d'appel** : comportement à reproduire pendant la soirée pour être repéré par ses alliés.
+  Les signes `blue` sont verbaux (tics de langage, mots qui riment avec « fromage »…),
+  les signes `red` sont gestuels (clin d'œil, se gratter le nez…),
+  les signes `yellow` sont des défis (« faire chanter un rouge », lancer un concours de blagues…).
+- **Un mot de passe** : un autre joueur qui le connaît peut le lui donner pour prouver son identité.
+- **Des indices** sur d'autres joueurs : « tu reconnaîtras X à son signe » et éventuellement « son mot de passe est Y ».
+  Le graphe des indices (qui connaît quoi sur qui) est défini par la configuration de partie.
 
-## Précision techniques
-Ecris le site en go principalement, css et html dans un git.
-Le code doit être en anglais.
-Dans un premier temps l'interface sera en français mais on pourra ajouter d'autre langue dans un second temps.
-Le thème, le rôle des joueurs et les signes distinctifs pourront être ajouter dans un dossier distinct en yaml.
-Les différentes configuration pour différent nombres de joueurs seront aussi dans un dossier distinct.
-Dans un premier temps il nous faudra une configuration de jeux pour un nombre de joueur définit et un thème dans un dossier.
+### Pendant la soirée
+Les joueurs observent, s'identifient (en donnant le mot de passe sur un papier), échangent leurs infos discrètement,
+et saisissent/modifient sur le site leurs suppositions : pour chaque autre joueur, **allié**, **ennemi** ou rien.
+Un joueur surpris à parler du jeu peut être **dénoncé publiquement** (l'admin enregistre la dénonciation).
 
+### Fin de partie et score (version de travail, à confirmer)
+L'admin clôture la saisie. Les `white` choisissent leur camp. Puis, pour chaque joueur :
+- +1 par allié correctement identifié, +1 par ennemi correctement identifié ;
+- −1 par ennemi désigné comme allié, −1 par allié désigné comme ennemi ;
+- −1 par dénonciation publique subie (les neutres gagnent +1 par dénonciation qu'ils font).
 
+Score d'équipe = somme des scores des membres. Le score de l'équipe neutre est multiplié par `4/n` (n = nombre de neutres)
+pour compenser son désavantage.
 
+Règles spécifiques `yellow` (thème d'origine) :
+- **ONG** : considérée comme alliée de tout le monde pour le décompte ; gagne/perd avec les neutres.
+- **Anonymous** : considéré comme ennemi de tout le monde (sauf des neutres) ; connaît les signes de presque tous ;
+  bonus s'il désigne comme ennemi les leaders `blue-1`/`red-1` après s'être fait passer pour leur allié ; −2 s'il désigne l'ONG comme ennemie.
+
+Les règles spéciales doivent être décrites dans la config (YAML), pas codées en dur par personnage : le code connaît des
+**types de règles** (ex. `ally_of_everyone`, `enemy_of_everyone`, `chooses_team`), le thème leur donne un nom et un texte.
+
+## Pages
+| Page | Accès | Contenu |
+|------|-------|---------|
+| Règles | public | Règles du jeu, rendues selon le thème |
+| Login | public | Connexion d'un joueur |
+| Mon rôle | joueur connecté, partie en cours | Personnage, équipe, signe, mot de passe, indices ; saisie/modification des suppositions ; choix de camp pour les `white` |
+| Résultats | tout le monde, **uniquement après clôture** | Rôles dévoilés, suppositions de chacun, scores par joueur et par équipe |
+| Admin | admin | Liste des joueurs, choix du thème et de la configuration, tirage des rôles, dénonciations, clôture de la partie |
+
+Un joueur déconnecté ne doit plus pouvoir voir son rôle (session par cookie).
+Les pages sont pensées **mobile d'abord** : les joueurs utilisent leur téléphone pendant la soirée.
+
+## Organisation du dépôt (cible)
+```
+cmd/spyball/        point d'entrée (flags : port, dossier de données, mot de passe admin)
+internal/game/      modèle et logique pure : rôles, tirage, suppositions, score  (sans HTTP, bien testé)
+internal/config/    chargement et validation des YAML (thèmes, configurations, traductions)
+internal/store/     persistance de l'état de la partie
+internal/web/       handlers HTTP, sessions, rendu des templates
+web/templates/      templates html/template
+web/static/         CSS (et JS minimal si vraiment nécessaire)
+themes/<theme>/     un dossier par thème (YAML) : noms des équipes, personnages, signes, mots de passe, règles spéciales
+setups/             configurations de partie par nombre de joueurs (YAML) : rôles présents et graphe des indices
+locales/            textes de l'interface (fr.yaml d'abord)
+old-game-drafts/    brouillons historiques, ignorés par git, simple source d'inspiration
+```
+
+Séparation importante :
+- une **configuration** (`setups/`) est indépendante du thème : elle parle de `blue-1`, `red-2`, `white-1`, `yellow-1`…
+  et décrit les indices (qui connaît le signe et/ou le mot de passe de qui) ;
+- un **thème** (`themes/`) associe chaque emplacement à un personnage et fournit les pools de signes et de mots de passe.
+  Ajouter un thème (Noël : lutins vs disciples du père Fouettard ; Halloween : sorciers vs fantômes) ne doit demander
+  **aucune modification de code**.
+
+## Précisions techniques
+- Go (dernière version stable), bibliothèque standard en priorité (`net/http`, `html/template`, `embed`).
+  Dépendances externes seulement si justifiées (ex. un parseur YAML).
+- Pas de framework front : HTML rendu côté serveur + CSS. JavaScript seulement pour du confort.
+- Un seul binaire, templates et assets embarqués ; tourne sur le réseau local de la soirée.
+- Une seule partie à la fois. L'état est persisté sur disque (fichier JSON) pour survivre à un redémarrage du serveur.
+- Code, identifiants, commentaires et messages de commit en **anglais**. Interface en **français** via `locales/`,
+  sans texte en dur dans les templates, pour pouvoir ajouter d'autres langues plus tard.
+- La logique de jeu (`internal/game`) est couverte par des tests unitaires, en particulier le calcul des scores.
+
+## Commandes
+À compléter quand le projet sera initialisé (`go run ./cmd/spyball`, `go test ./...`).
+
+## Feuille de route
+1. **V1** : un thème (« bal des nations ») et une configuration pour un nombre de joueurs fixe ; toutes les pages ci-dessus.
+2. Configurations équilibrées pour tout nombre de joueurs de 6 à 24 (éventuellement générées).
+3. Autres thèmes, autres langues.
+
+## Questions ouvertes
+- Login : comment un joueur s'authentifie-t-il (nom + code généré par l'admin, lien/QR code personnel…) ?
+- Le score : quelle version des règles retenir (les brouillons en contiennent plusieurs) ?
+  Bonus « allié qui se reconnaît mutuellement » ? Dénonciations : saisies par l'admin ?
+- Indices : distinguer « signe seulement » et « signe + mot de passe » dans les configurations ?
+- Nom des configurations des brouillons (`12/11/10-44211-0`) : une configuration couvre-t-elle plusieurs tailles de groupe
+  (rôles optionnels) ?
+- Le tirage des rôles est-il aléatoire, et l'organisateur peut-il jouer (rôle neutre tiré au hasard) ?
