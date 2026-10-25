@@ -28,28 +28,48 @@ Les neutres qui restent neutres forment ensemble une équipe pour le score.
   Les signes `blue` sont verbaux (tics de langage, mots qui riment avec « fromage »…),
   les signes `red` sont gestuels (clin d'œil, se gratter le nez…),
   les signes `yellow` sont des défis (« faire chanter un rouge », lancer un concours de blagues…).
-- **Un mot de passe** : un autre joueur qui le connaît peut le lui donner pour prouver son identité.
-- **Des indices** sur d'autres joueurs : « tu reconnaîtras X à son signe » et éventuellement « son mot de passe est Y ».
-  Le graphe des indices (qui connaît quoi sur qui) est défini par la configuration de partie.
+- **Des indices** sur d'autres joueurs : « tu reconnaîtras le personnage X à son signe Y ».
+  Le graphe des indices (qui connaît le signe de qui) est défini par la configuration de partie.
+
+Il n'y a **pas de mot de passe** entre joueurs (trop compliqué en pratique) : les joueurs se reconnaissent aux signes
+et se dévoilent l'un à l'autre comme ils le souhaitent.
+
+### Tirage
+L'admin saisit la liste des joueurs, choisit le thème et la configuration correspondant au nombre de joueurs,
+puis lance le tirage : les emplacements de la configuration sont attribués **aléatoirement** aux joueurs
+et les signes sont tirés **aléatoirement** dans les listes du thème (sans doublon).
+Le tirage étant aléatoire, **l'admin peut jouer** comme les autres (contrairement à la version papier).
 
 ### Pendant la soirée
-Les joueurs observent, s'identifient (en donnant le mot de passe sur un papier), échangent leurs infos discrètement,
+Les joueurs observent, se reconnaissent, échangent leurs infos discrètement,
 et saisissent/modifient sur le site leurs suppositions : pour chaque autre joueur, **allié**, **ennemi** ou rien.
-Un joueur surpris à parler du jeu peut être **dénoncé publiquement** (l'admin enregistre la dénonciation).
+Un joueur surpris à parler du jeu peut être **dénoncé publiquement**.
 
-### Fin de partie et score (version de travail, à confirmer)
-L'admin clôture la saisie. Les `white` choisissent leur camp. Puis, pour chaque joueur :
+### Fin de partie et score
+Un `white` choisit son camp (`blue`, `red` ou neutre) sur sa page et peut changer d'avis jusqu'à la clôture.
+Pour le score, il est alors **entièrement** considéré comme membre du camp choisi.
+
+Qui est allié de qui :
+- deux joueurs du même camp sont alliés ; deux joueurs de camps différents sont ennemis ;
+- un neutre resté neutre est donc un **ennemi** pour les `blue` et les `red`, et un allié pour les autres neutres ;
+- exceptions `yellow` : l'ONG est l'alliée de tout le monde, l'Anonymous est l'ennemi de tout le monde.
+
+L'admin clôture la saisie. Puis, pour chaque joueur :
 - +1 par allié correctement identifié, +1 par ennemi correctement identifié ;
 - −1 par ennemi désigné comme allié, −1 par allié désigné comme ennemi ;
-- −1 par dénonciation publique subie (les neutres gagnent +1 par dénonciation qu'ils font).
+- points attribués manuellement par l'admin pendant l'affichage des résultats :
+  défis réussis par les `yellow`, dénonciations publiques (−1 pour le dénoncé, +1 pour un neutre qui dénonce).
+
+Ce barème est celui de la V1 ; il pourra être revu ensuite (il doit donc rester isolé et facile à modifier).
 
 Score d'équipe = somme des scores des membres. Le score de l'équipe neutre est multiplié par `4/n` (n = nombre de neutres)
 pour compenser son désavantage.
 
 Règles spécifiques `yellow` (thème d'origine) :
-- **ONG** : considérée comme alliée de tout le monde pour le décompte ; gagne/perd avec les neutres.
-- **Anonymous** : considéré comme ennemi de tout le monde (sauf des neutres) ; connaît les signes de presque tous ;
-  bonus s'il désigne comme ennemi les leaders `blue-1`/`red-1` après s'être fait passer pour leur allié ; −2 s'il désigne l'ONG comme ennemie.
+- **ONG** : alliée de tout le monde pour le décompte ; son score compte dans l'équipe neutre.
+- **Anonymous** : ennemi de tout le monde pour le décompte ; son score compte dans l'équipe neutre ;
+  il connaît les signes de beaucoup de joueurs (via les indices de la configuration).
+  Ses bonus éventuels (piéger un leader, etc.) sont attribués manuellement par l'admin en fin de partie.
 
 Les règles spéciales doivent être décrites dans la config (YAML), pas codées en dur par personnage : le code connaît des
 **types de règles** (ex. `ally_of_everyone`, `enemy_of_everyone`, `chooses_team`), le thème leur donne un nom et un texte.
@@ -58,12 +78,18 @@ Les règles spéciales doivent être décrites dans la config (YAML), pas codée
 | Page | Accès | Contenu |
 |------|-------|---------|
 | Règles | public | Règles du jeu, rendues selon le thème |
-| Login | public | Connexion d'un joueur |
-| Mon rôle | joueur connecté, partie en cours | Personnage, équipe, signe, mot de passe, indices ; saisie/modification des suppositions ; choix de camp pour les `white` |
-| Résultats | tout le monde, **uniquement après clôture** | Rôles dévoilés, suppositions de chacun, scores par joueur et par équipe |
-| Admin | admin | Liste des joueurs, choix du thème et de la configuration, tirage des rôles, dénonciations, clôture de la partie |
+| Login | public | Connexion d'un joueur (voir ci-dessous) |
+| Mon rôle | joueur connecté, partie en cours | Personnage, équipe, signe, indices ; saisie/modification des suppositions ; choix de camp pour les `white` |
+| Résultats | tout le monde, **uniquement après clôture** | Rôles dévoilés, suppositions de chacun, scores par joueur et par équipe ; l'admin peut y ajouter des points (défis, dénonciations) |
+| Admin | admin | Liste des joueurs, choix du thème et de la configuration, tirage, clôture de la partie |
 
-Un joueur déconnecté ne doit plus pouvoir voir son rôle (session par cookie).
+**Authentification des joueurs** :
+- première connexion : le joueur donne son nom (choisi dans la liste saisie par l'admin) ; le site lui révèle le nom de son personnage ;
+- connexions suivantes : nom + nom du personnage. Le personnage étant secret, il sert de mot de passe.
+- session par cookie ; un joueur déconnecté ne peut plus voir son rôle.
+
+**L'admin pouvant jouer**, la page admin ne doit jamais afficher l'attribution des rôles, les signes
+ni les suppositions avant la clôture. L'admin est authentifié séparément (mot de passe passé au lancement du serveur).
 Les pages sont pensées **mobile d'abord** : les joueurs utilisent leur téléphone pendant la soirée.
 
 ## Organisation du dépôt (cible)
@@ -75,16 +101,18 @@ internal/store/     persistance de l'état de la partie
 internal/web/       handlers HTTP, sessions, rendu des templates
 web/templates/      templates html/template
 web/static/         CSS (et JS minimal si vraiment nécessaire)
-themes/<theme>/     un dossier par thème (YAML) : noms des équipes, personnages, signes, mots de passe, règles spéciales
-setups/             configurations de partie par nombre de joueurs (YAML) : rôles présents et graphe des indices
+themes/<theme>/     un dossier par thème (YAML) : noms des équipes, personnages, listes de signes, règles spéciales
+setups/             configurations de partie, une par nombre de joueurs (YAML) : rôles présents et graphe des indices
 locales/            textes de l'interface (fr.yaml d'abord)
 old-game-drafts/    brouillons historiques, ignorés par git, simple source d'inspiration
 ```
 
 Séparation importante :
 - une **configuration** (`setups/`) est indépendante du thème : elle parle de `blue-1`, `red-2`, `white-1`, `yellow-1`…
-  et décrit les indices (qui connaît le signe et/ou le mot de passe de qui) ;
-- un **thème** (`themes/`) associe chaque emplacement à un personnage et fournit les pools de signes et de mots de passe.
+  et décrit les indices (qui connaît le signe de qui) ;
+- une configuration correspond à **un nombre exact de joueurs** : pour couvrir plusieurs tailles, on duplique
+  la configuration en retirant des neutres, plutôt que de gérer des rôles optionnels ;
+- un **thème** (`themes/`) associe chaque emplacement à un personnage et fournit les listes de signes par couleur.
   Ajouter un thème (Noël : lutins vs disciples du père Fouettard ; Halloween : sorciers vs fantômes) ne doit demander
   **aucune modification de code**.
 
@@ -102,15 +130,19 @@ Séparation importante :
 À compléter quand le projet sera initialisé (`go run ./cmd/spyball`, `go test ./...`).
 
 ## Feuille de route
-1. **V1** : un thème (« bal des nations ») et une configuration pour un nombre de joueurs fixe ; toutes les pages ci-dessus.
+1. **V1** : thème « bal des nations » et une configuration à **12 joueurs**
+   (4 `blue`, 4 `red`, 2 `white`, ONG, Anonymous, d'après `12/11/10-44211-0` des brouillons) ; toutes les pages ci-dessus.
 2. Configurations équilibrées pour tout nombre de joueurs de 6 à 24 (éventuellement générées).
 3. Autres thèmes, autres langues.
 
-## Questions ouvertes
-- Login : comment un joueur s'authentifie-t-il (nom + code généré par l'admin, lien/QR code personnel…) ?
-- Le score : quelle version des règles retenir (les brouillons en contiennent plusieurs) ?
-  Bonus « allié qui se reconnaît mutuellement » ? Dénonciations : saisies par l'admin ?
-- Indices : distinguer « signe seulement » et « signe + mot de passe » dans les configurations ?
-- Nom des configurations des brouillons (`12/11/10-44211-0`) : une configuration couvre-t-elle plusieurs tailles de groupe
-  (rôles optionnels) ?
-- Le tirage des rôles est-il aléatoire, et l'organisateur peut-il jouer (rôle neutre tiré au hasard) ?
+### Étapes de la V1
+Chaque étape est livrée testée, dans un commit à part.
+- [ ] 1. Squelette : module Go, serveur HTTP, layout HTML commun, CSS de base, templates et assets embarqués.
+- [ ] 2. Formats YAML et chargement validé : thème « bal des nations », configuration 12 joueurs, `locales/fr.yaml`.
+- [ ] 3. Logique de jeu (`internal/game`) : état de la partie, tirage aléatoire, relations allié/ennemi, calcul des scores.
+- [ ] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).
+- [ ] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
+- [ ] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
+- [ ] 7. Page résultats : rôles dévoilés, suppositions, scores, ajout de points manuels par l'admin.
+- [ ] 8. Page règles, rendue selon le thème.
+- [ ] 9. Finitions : affichage mobile, test de bout en bout d'une partie complète, README (lancement, ajout d'un thème).
