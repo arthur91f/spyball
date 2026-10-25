@@ -156,6 +156,9 @@ func TestLoadRejectsInvalidThemes(t *testing.T) {
 		}, "teams.neutral"},
 		{"yellow without rule", func(s string) string { return strings.Replace(s, ", rule: ally_of_everyone", "", 1) }, "yellow characters need a rule"},
 		{"duplicate sign", func(s string) string { return strings.Replace(s, "r1, r2", "r1, r1", 1) }, "duplicate sign"},
+		{"white sign list", func(s string) string {
+			return strings.Replace(s, "  yellow: [\"faire", "  white: [w1]\n  yellow: [\"faire", 1)
+		}, "signs.white"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -188,10 +191,17 @@ func TestCast(t *testing.T) {
 		{ID: "blue-1", Color: Blue, Number: 1},
 		{ID: "blue-2", Color: Blue, Number: 2},
 		{ID: "red-1", Color: Red, Number: 1},
+		{ID: "white-1", Color: White, Number: 1},
 		{ID: "yellow-1", Color: Yellow, Number: 1, Rule: EnemyOfEveryone},
 	}}
 	_, err = theme.Cast(setup)
-	for _, want := range []string{"only 1 blue characters", "no more yellow character with rule enemy_of_everyone", "1 blue signs, setup s needs 2"} {
+	for _, want := range []string{
+		"only 1 blue characters",
+		"only 0 white characters",
+		"no more yellow character with rule enemy_of_everyone",
+		"1 blue signs, setup s needs 3", // 2 blue slots + 1 white slot
+		"1 red signs, setup s needs 2",  // 1 red slot + 1 white slot
+	} {
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("Cast err = %v, want containing %q", err, want)
 		}

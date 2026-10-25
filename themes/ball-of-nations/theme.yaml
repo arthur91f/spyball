@@ -5,7 +5,8 @@
 # characters : personnages par couleur. L'emplacement <couleur>-N reçoit le N-ième personnage de sa couleur.
 #              Les jaunes sont choisis selon leur règle (rule) : ally_of_everyone ou enemy_of_everyone.
 #              Les noms doivent être uniques : ils servent de mot de passe aux joueurs.
-# signs      : signes tirés au hasard (sans doublon) pour chaque couleur.
+# signs      : signes tirés au hasard (sans doublon) : listes blue, red et yellow.
+#              Les blancs n'ont pas de liste : ils tirent un signe bleu et un signe rouge.
 
 name: Le bal des nations
 story: |
@@ -79,7 +80,7 @@ signs:
     - utiliser des sigles
     - utiliser des onomatopées
     - dire tout le temps « euh »
-    - chanter
+    - chanter ou fredonner un air connu
     - faire des bruits de bouche (siffler…)
     - utiliser des anglicismes
     - être grossier, jurer
@@ -88,6 +89,7 @@ signs:
     - dire « père » au lieu de « verre » et « boire » au lieu de « voir »
     - utiliser des mots qui riment avec « tristitude »
     - utiliser des mots qui riment avec « fromage »
+    - commencer ses phrases par « en vrai »
   red:
     - s'exprimer en mimant
     - avoir les mains sur les hanches
@@ -103,11 +105,8 @@ signs:
     - lever le petit doigt en buvant
     - se moucher
     - faire des checks de plus de deux mouvements
-  white:
-    - fredonner un air connu
-    - commencer ses phrases par « en vrai »
-    - tapoter du pied en rythme
     - regarder l'heure ostensiblement
+    - tapoter du pied en rythme
   yellow:
     - faire chanter un {red}
     - faire siffler un {red}

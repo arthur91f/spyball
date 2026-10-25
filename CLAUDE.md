@@ -28,8 +28,12 @@ Les neutres qui restent neutres forment ensemble une équipe pour le score.
   Les signes `blue` sont verbaux (tics de langage, mots qui riment avec « fromage »…),
   les signes `red` sont gestuels (clin d'œil, se gratter le nez…),
   les signes `yellow` sont des défis (« faire chanter un rouge », lancer un concours de blagues…).
+  Un `white` n'a pas de liste à lui : il tire **un signe bleu et un signe rouge**, et choisit ainsi
+  par quel camp il veut se faire reconnaître.
 - **Des indices** sur d'autres joueurs : « tu reconnaîtras le personnage X à son signe Y ».
   Le graphe des indices (qui connaît le signe de qui) est défini par la configuration de partie.
+  Un indice sur un `white` donne son signe bleu à un `blue`, son signe rouge à un `red`, et ses deux signes
+  à un `white` ou un `yellow`.
 
 Il n'y a **pas de mot de passe** entre joueurs (trop compliqué en pratique) : les joueurs se reconnaissent aux signes
 et se dévoilent l'un à l'autre comme ils le souhaitent.

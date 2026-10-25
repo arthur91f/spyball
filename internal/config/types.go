@@ -28,6 +28,15 @@ func (c Color) valid() bool {
 	return false
 }
 
+// SignColors lists the sign lists a slot of this color draws one sign from each.
+// White slots draw a blue sign and a red sign, so they can choose which camp recognizes them.
+func (c Color) SignColors() []Color {
+	if c == White {
+		return []Color{Blue, Red}
+	}
+	return []Color{c}
+}
+
 // Camp is a scoring team. White players end up in one of them; yellow players are Neutral.
 type Camp string
 

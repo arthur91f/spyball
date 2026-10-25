@@ -14,7 +14,7 @@ type Theme struct {
 	Story      string
 	Teams      map[Camp]Team
 	Characters map[Color][]Character
-	Signs      map[Color][]string // placeholders such as {red} already replaced
+	Signs      map[Color][]string // blue, red and yellow lists (see Color.SignColors); placeholders already replaced
 }
 
 // Team is the themed name of a camp.
@@ -93,7 +93,10 @@ func newTheme(id string, f themeFile) (*Theme, error) {
 
 	seen := map[string]bool{}
 	for color, signs := range f.Signs {
-		if !color.valid() {
+		switch {
+		case color == White:
+			errs = append(errs, errors.New("signs.white: white players draw from the blue and red lists, remove this list"))
+		case !color.valid():
 			errs = append(errs, fmt.Errorf("signs: unknown color %q", color))
 		}
 		for i, sign := range signs {
@@ -155,9 +158,15 @@ func (t *Theme) Cast(s *Setup) (map[SlotID]Character, error) {
 		cast[slot.ID] = chars[slot.Number-1]
 	}
 
+	need := map[Color]int{}
+	for _, slot := range s.Slots {
+		for _, c := range slot.Color.SignColors() {
+			need[c]++
+		}
+	}
 	for _, color := range Colors {
-		if need, have := s.CountColor(color), len(t.Signs[color]); need > have {
-			errs = append(errs, fmt.Errorf("theme %s has %d %s signs, setup %s needs %d", t.ID, have, color, s.ID, need))
+		if have := len(t.Signs[color]); need[color] > have {
+			errs = append(errs, fmt.Errorf("theme %s has %d %s signs, setup %s needs %d", t.ID, have, color, s.ID, need[color]))
 		}
 	}
 
