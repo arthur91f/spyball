@@ -1,0 +1,114 @@
+{{define "title"}}{{t "results.title"}} · {{t "app.name"}}{{end}}
+
+{{define "content"}}
+<h1>{{t "results.title"}}</h1>
+
+{{if not .Closed}}
+<section class="card">
+    <p>{{t "results.not_yet"}}</p>
+</section>
+{{else}}
+
+{{with .Error}}<p class="alert" role="alert">{{.}}</p>{{end}}
+
+<section class="card">
+    <h2>{{t "results.teams.title"}}</h2>
+    <ol class="ranking">
+        {{range .Teams}}
+        <li class="team-{{.Camp}}{{if .Winner}} winner{{end}}">
+            <span class="badge team-{{.Camp}}">{{.Name}}</span>
+            <span class="score">{{.Score}}&nbsp;{{t "results.points"}}</span>
+            <small class="muted">
+                {{tf "results.teams.members" .Members}}
+                {{if .Weighted}} · {{tf "results.teams.weighted" .Sum $.NeutralFactor .Members}}{{end}}
+            </small>
+            {{if .Winner}}<strong class="winner-label">{{t "results.teams.winner"}}</strong>{{end}}
+        </li>
+        {{end}}
+    </ol>
+</section>
+
+<section class="card">
+    <h2>{{t "results.players.title"}}</h2>
+    <p class="muted">{{t "results.players.help"}}</p>
+    <ol class="rows results">
+        {{range .Players}}
+        <li>
+            <details>
+                <summary>
+                    <span class="rank">{{.Rank}}</span>
+                    <span class="who">
+                        <strong>{{.Name}}</strong> · {{.Character}}<br>
+                        <small class="camp team-{{.Camp}}">{{.CampName}}</small>
+                        {{if and (eq .Color "white") (ne .Camp "neutral")}}<small class="muted">{{t "results.players.white"}}</small>{{end}}
+                        {{if eq .Rule "ally_of_everyone"}}<small class="muted">{{t "results.players.ally_of_everyone"}}</small>{{end}}
+                        {{if eq .Rule "enemy_of_everyone"}}<small class="muted">{{t "results.players.enemy_of_everyone"}}</small>{{end}}
+                    </span>
+                    <span class="score">{{.Total}}</span>
+                </summary>
+                <p class="muted">
+                    {{tf "results.players.right" .Right}} · {{tf "results.players.wrong" .Wrong}}
+                    {{with .Manual}} · {{tf "results.players.manual" .}}{{end}}
+                </p>
+                {{if .Guesses}}
+                <ul class="guess-list">
+                    {{range .Guesses}}
+                    <li class="{{if .Correct}}correct{{else}}wrong{{end}}">
+                        <span aria-hidden="true">{{if .Correct}}✓{{else}}✗{{end}}</span>
+                        {{.Name}} :
+                        {{if eq .Guess "ally"}}{{t "results.guess.ally"}}{{else}}{{t "results.guess.enemy"}}{{end}}
+                        <span class="visually-hidden">({{if .Correct}}{{t "results.guess.correct"}}{{else}}{{t "results.guess.wrong"}}{{end}})</span>
+                    </li>
+                    {{end}}
+                </ul>
+                {{else}}
+                <p class="muted">{{t "results.players.no_guess"}}</p>
+                {{end}}
+            </details>
+        </li>
+        {{end}}
+    </ol>
+</section>
+
+<section class="card" id="manual">
+    <h2>{{t "results.manual.title"}}</h2>
+    {{if .Manual}}
+    <ul class="rows">
+        {{range .Manual}}
+        <li>
+            <span><strong>{{.Points}}</strong> {{.Name}}{{with .Reason}} <span class="muted">— {{.}}</span>{{end}}</span>
+            {{if $.IsAdmin}}
+            <form method="post" action="/results/points/{{.Index}}/delete">
+                <button type="submit" class="secondary small">{{t "results.manual.remove"}}</button>
+            </form>
+            {{end}}
+        </li>
+        {{end}}
+    </ul>
+    {{else}}
+    <p class="muted">{{t "results.manual.none"}}</p>
+    {{end}}
+
+    {{if .IsAdmin}}
+    <form method="post" action="/results/points" class="stack">
+        <h3>{{t "results.manual.add_title"}}</h3>
+        <label for="player">{{t "results.manual.player"}}</label>
+        <select id="player" name="player" required>
+            <option value="">{{t "results.manual.choose_player"}}</option>
+            {{range .Options}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+        </select>
+        <label for="points">{{t "results.manual.points"}}</label>
+        <input id="points" name="points" type="number" inputmode="numeric" min="-20" max="20" value="1" required>
+        <label for="reason">{{t "results.manual.reason"}}</label>
+        <input id="reason" name="reason" type="text" list="reasons" autocomplete="off">
+        <datalist id="reasons">
+            <option value="{{t "results.manual.reasons.challenge"}}">
+            <option value="{{t "results.manual.reasons.denounced"}}">
+            <option value="{{t "results.manual.reasons.denouncer"}}">
+        </datalist>
+        <button type="submit">{{t "results.manual.add"}}</button>
+    </form>
+    {{end}}
+</section>
+{{end}}
+{{end}}

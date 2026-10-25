@@ -328,3 +328,107 @@ fieldset:disabled .choice label {
     cursor: default;
     opacity: 0.7;
 }
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.ranking {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ranking li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-left: 0.4rem solid var(--team);
+    border-radius: var(--radius);
+}
+
+.ranking li.winner {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-color: var(--accent);
+    border-left-color: var(--team);
+}
+
+.ranking small {
+    flex-basis: 100%;
+}
+
+.score {
+    margin-left: auto;
+    font-weight: 700;
+    font-size: 1.25rem;
+    white-space: nowrap;
+}
+
+.winner-label {
+    color: var(--accent);
+}
+
+.results li {
+    display: block;
+    padding: 0.4rem 0;
+}
+
+.results summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.results summary::-webkit-details-marker {
+    display: none;
+}
+
+.rank {
+    min-width: 1.75rem;
+    color: var(--muted);
+    font-weight: 700;
+    text-align: right;
+}
+
+.who {
+    flex: 1;
+    min-width: 0;
+}
+
+.guess-list {
+    list-style: none;
+    margin: 0 0 0.5rem;
+    padding: 0 0 0 2.5rem;
+}
+
+.guess-list .correct span[aria-hidden] {
+    color: #2e9d5b;
+}
+
+.guess-list .wrong span[aria-hidden] {
+    color: var(--team-red);
+}
+
+/* Camp name preceded by a dot of its color, for tight rows. */
+.camp::before {
+    content: "";
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin-right: 0.35rem;
+    border-radius: 50%;
+    background: var(--team);
+}

@@ -6,9 +6,9 @@ import "github.com/arthur91f/spyball/internal/config"
 const (
 	pointsRightGuess = 1
 	pointsWrongGuess = -1
-	// The neutral team score is multiplied by neutralTeamFactor/n, n being its number of members,
-	// to make up for being fewer.
-	neutralTeamFactor = 4.0
+	// NeutralTeamFactor: the neutral team score is multiplied by NeutralTeamFactor/n, n being its number
+	// of members, to make up for being fewer.
+	NeutralTeamFactor = 4
 )
 
 // PlayerScore details the score of one player.
@@ -76,7 +76,7 @@ func (g *Game) Score() Results {
 		}
 		team.Score = float64(team.Sum)
 		if camp == config.CampNeutral {
-			team.Score *= neutralTeamFactor / float64(team.Members)
+			team.Score *= float64(NeutralTeamFactor) / float64(team.Members)
 		}
 		res.Teams = append(res.Teams, *team)
 	}

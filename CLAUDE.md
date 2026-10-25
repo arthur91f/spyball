@@ -98,6 +98,11 @@ Les règles spéciales doivent être décrites dans la config (YAML), pas codée
 - un joueur qui a oublié son personnage demande à l'admin de « réinitialiser » sa connexion (il se reconnecte alors
   avec son seul nom). La page admin indique seulement qui s'est déjà connecté, jamais les rôles.
 
+**Résultats** (`/results`) : visibles par tous une fois la partie clôturée (avant, la page dit seulement d'attendre).
+Classement des camps (gagnant mis en avant, pondération des neutres affichée), classement des joueurs avec leur personnage
+et le détail de leurs suppositions (✓/✗), liste des points manuels. L'admin connecté y ajoute ou annule des points
+(entre −20 et +20 par entrée, avec une raison).
+
 **L'admin pouvant jouer**, la page admin ne doit jamais afficher l'attribution des rôles, les signes
 ni les suppositions avant la clôture. L'admin est authentifié séparément (mot de passe passé au lancement du serveur).
 Les pages sont pensées **mobile d'abord** : les joueurs utilisent leur téléphone pendant la soirée.
@@ -192,6 +197,6 @@ Chaque étape est livrée testée, dans un commit à part.
 - [x] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).
 - [x] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
 - [x] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
-- [ ] 7. Page résultats : rôles dévoilés, suppositions, scores, ajout de points manuels par l'admin.
+- [x] 7. Page résultats : rôles dévoilés, suppositions, scores, ajout de points manuels par l'admin.
 - [ ] 8. Page règles, rendue selon le thème.
 - [ ] 9. Finitions : affichage mobile, test de bout en bout d'une partie complète, README (lancement, ajout d'un thème).

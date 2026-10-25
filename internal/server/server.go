@@ -14,6 +14,7 @@ import (
 	"path"
 
 	"github.com/arthur91f/spyball/internal/config"
+	"github.com/arthur91f/spyball/internal/game"
 	"github.com/arthur91f/spyball/internal/store"
 	"github.com/arthur91f/spyball/web"
 )
@@ -93,6 +94,7 @@ func New(catalog *config.Catalog, st *store.Store, opts Options) (*Server, error
 	mux.HandleFunc("GET /{$}", s.handleHome)
 	s.registerAdmin(mux)
 	s.registerPlayer(mux)
+	s.registerResults(mux)
 
 	// Rejects cross-site form submissions (CSRF) based on the browser's Origin / Sec-Fetch-Site headers.
 	s.handler = http.NewCrossOriginProtection().Handler(mux)
@@ -103,8 +105,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.handler.ServeHTTP(w, r)
 }
 
+type homePage struct {
+	Closed bool
+}
+
 func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
-	s.render(w, http.StatusOK, "home", nil)
+	var page homePage
+	_ = s.store.Read(func(g *game.Game) error {
+		page.Closed = g.Phase == game.PhaseClosed
+		return nil
+	})
+	s.render(w, http.StatusOK, "home", page)
 }
 
 // parsePages builds one template set per page, each combining the shared layout

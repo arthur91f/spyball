@@ -10,7 +10,7 @@
 
 {{with .Error}}<p class="alert" role="alert">{{.}}</p>{{end}}
 {{if .Welcome}}<p class="notice" role="status">{{t "role.welcome"}}</p>{{end}}
-{{if .Closed}}<p class="notice" role="status">{{t "role.closed"}}</p>{{end}}
+{{if .Closed}}<p class="notice" role="status">{{t "role.closed"}} <a href="/results">{{t "results.link"}}</a></p>{{end}}
 
 <section class="card identity team-{{.Color}}">
     <p class="muted">{{tf "role.you_are" .Name}}</p>

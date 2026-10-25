@@ -64,6 +64,49 @@ role:
 error:
   home: Retour à l'accueil
 
+format:
+  decimal_separator: ","
+
+results:
+  title: Résultats
+  link: Voir les résultats
+  not_yet: Les résultats seront visibles quand l'organisateur aura clôturé la partie.
+  points: pts
+  teams:
+    title: Classement des camps
+    members: "%d joueurs"
+    weighted: "somme %d × %d/%d (bonus des neutres)"
+    winner: Victoire !
+  players:
+    title: Classement des joueurs
+    help: Touche un joueur pour voir le détail de ses suppositions.
+    white: non-aligné rallié
+    ally_of_everyone: allié de tous
+    enemy_of_everyone: ennemi de tous
+    right: "%d bonne(s) réponse(s)"
+    wrong: "%d erreur(s)"
+    manual: "%s point(s) manuel(s)"
+    no_guess: Aucune supposition.
+  guess:
+    ally: allié
+    enemy: ennemi
+    correct: juste
+    wrong: faux
+  manual:
+    title: Points manuels
+    none: Aucun point manuel pour l'instant.
+    remove: Annuler
+    add_title: Ajouter des points
+    player: Joueur
+    choose_player: Choisis un joueur…
+    points: Points (négatif pour une pénalité)
+    reason: Raison
+    reasons:
+      challenge: Défi réussi
+      denounced: Dénoncé publiquement
+      denouncer: Dénonciation publique
+    add: Ajouter
+
 admin:
   title: Administration
   logout: Se déconnecter
@@ -110,6 +153,7 @@ admin:
   closed:
     title: Partie terminée
     help: Les suppositions sont figées. Les résultats sont visibles par tous.
+    results: Voir les résultats et attribuer des points
   reset:
     title: Nouvelle partie
     help: Efface tout (joueurs, rôles, suppositions, points) pour recommencer de zéro.
