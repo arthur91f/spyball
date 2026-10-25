@@ -98,8 +98,9 @@ cmd/spyball/        point d'entrée (flags : port, dossier de données, mot de p
 internal/game/      modèle et logique pure : rôles, tirage, suppositions, score  (sans HTTP, bien testé)
 internal/config/    chargement et validation des YAML (thèmes, configurations, traductions)
 internal/store/     persistance de l'état de la partie
-internal/web/       handlers HTTP, sessions, rendu des templates
-web/templates/      templates html/template
+internal/server/    handlers HTTP, sessions, rendu des templates
+web/                package Go qui embarque (embed) les templates et les assets
+web/templates/      templates html/template : layout.html + une page par fichier dans pages/
 web/static/         CSS (et JS minimal si vraiment nécessaire)
 themes/<theme>/     un dossier par thème (YAML) : noms des équipes, personnages, listes de signes, règles spéciales
 setups/             configurations de partie, une par nombre de joueurs (YAML) : rôles présents et graphe des indices
@@ -127,7 +128,13 @@ Séparation importante :
 - La logique de jeu (`internal/game`) est couverte par des tests unitaires, en particulier le calcul des scores.
 
 ## Commandes
-À compléter quand le projet sera initialisé (`go run ./cmd/spyball`, `go test ./...`).
+```bash
+go run ./cmd/spyball -addr :8080   # lance le serveur sur http://localhost:8080
+go test ./...                      # tests
+go vet ./...
+```
+Chaque page est un fichier `web/templates/pages/<nom>.html` définissant les blocs `title` et `content`,
+rendu dans `layout.html` via `Server.render(w, status, "<nom>", data)`.
 
 ## Feuille de route
 1. **V1** : thème « bal des nations » et une configuration à **12 joueurs**
@@ -137,7 +144,7 @@ Séparation importante :
 
 ### Étapes de la V1
 Chaque étape est livrée testée, dans un commit à part.
-- [ ] 1. Squelette : module Go, serveur HTTP, layout HTML commun, CSS de base, templates et assets embarqués.
+- [x] 1. Squelette : module Go, serveur HTTP, layout HTML commun, CSS de base, templates et assets embarqués.
 - [ ] 2. Formats YAML et chargement validé : thème « bal des nations », configuration 12 joueurs, `locales/fr.yaml`.
 - [ ] 3. Logique de jeu (`internal/game`) : état de la partie, tirage aléatoire, relations allié/ennemi, calcul des scores.
 - [ ] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).

@@ -1,0 +1,110 @@
+/* Mobile-first base styles. Team colors are variables so a theme can override them later. */
+:root {
+    --bg: #14161c;
+    --surface: #1f222b;
+    --text: #e9eaee;
+    --muted: #9a9fad;
+    --accent: #d4af37;
+    --border: #2e323d;
+
+    --team-blue: #3b82f6;
+    --team-red: #e0414e;
+    --team-yellow: #e3c800;
+    --team-white: #f2f2f2;
+
+    --radius: 0.75rem;
+    --space: 1rem;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+a {
+    color: var(--accent);
+}
+
+h1,
+h2,
+h3 {
+    line-height: 1.2;
+    margin: 0 0 var(--space);
+}
+
+.site-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem var(--space);
+    border-bottom: 1px solid var(--border);
+}
+
+.brand {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+}
+
+.container {
+    width: 100%;
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: var(--space);
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space);
+    margin-bottom: var(--space);
+}
+
+button,
+.button {
+    display: inline-block;
+    min-height: 2.75rem; /* comfortable touch target */
+    padding: 0.5rem 1.25rem;
+    border: none;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--bg);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+input,
+select,
+textarea {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+}
+
+.muted {
+    color: var(--muted);
+}
