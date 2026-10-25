@@ -56,7 +56,8 @@ Pour le score, il est alors **entièrement** considéré comme membre du camp ch
 Qui est allié de qui :
 - deux joueurs du même camp sont alliés ; deux joueurs de camps différents sont ennemis ;
 - un neutre resté neutre est donc un **ennemi** pour les `blue` et les `red`, et un allié pour les autres neutres ;
-- exceptions `yellow` : l'ONG est l'alliée de tout le monde, l'Anonymous est l'ennemi de tout le monde.
+- exceptions `yellow` : l'ONG est l'alliée de tout le monde, l'Anonymous est l'ennemi de tout le monde ;
+  entre les deux, « allié de tous » l'emporte (l'ONG et l'Anonymous sont alliés). La relation est toujours symétrique.
 
 L'admin clôture la saisie. Puis, pour chaque joueur :
 - +1 par allié correctement identifié, +1 par ennemi correctement identifié ;
@@ -145,6 +146,12 @@ Chaque page est un fichier `web/templates/pages/<nom>.html` définissant les blo
 rendu dans `layout.html` via `Server.render(w, status, "<nom>", data)`.
 Tout texte d'interface passe par `{{t "cle.sous_cle"}}` ; une clé absente de la locale fait échouer le rendu.
 
+Logique de jeu (`internal/game`) : `Game` est un état autonome sérialisable en JSON. Au tirage, chaque joueur
+reçoit une copie de son emplacement, personnage, signes et indices : la partie reste cohérente même si les YAML changent.
+Phases `setup` → `running` → `closed` (`CancelDraw` permet de revenir à `setup` pour corriger la liste des joueurs).
+Le barème est regroupé en tête de `internal/game/score.go`. Le tirage reçoit un `*rand.Rand` (reproductible en test).
+`Game` n'est pas protégé contre les accès concurrents : c'est le rôle de l'appelant.
+
 Correspondance thème ↔ configuration : l'emplacement `<couleur>-N` reçoit le N-ième personnage de sa couleur ;
 un emplacement jaune reçoit le premier personnage jaune libre ayant la même `rule`.
 Dans les signes, `{blue}`, `{red}` et `{neutral}` sont remplacés par le `member` du camp correspondant.
@@ -159,7 +166,7 @@ Dans les signes, `{blue}`, `{red}` et `{neutral}` sont remplacés par le `member
 Chaque étape est livrée testée, dans un commit à part.
 - [x] 1. Squelette : module Go, serveur HTTP, layout HTML commun, CSS de base, templates et assets embarqués.
 - [x] 2. Formats YAML et chargement validé : thème « bal des nations », configuration 12 joueurs, `locales/fr.yaml`.
-- [ ] 3. Logique de jeu (`internal/game`) : état de la partie, tirage aléatoire, relations allié/ennemi, calcul des scores.
+- [x] 3. Logique de jeu (`internal/game`) : état de la partie, tirage aléatoire, relations allié/ennemi, calcul des scores.
 - [ ] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).
 - [ ] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
 - [ ] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
