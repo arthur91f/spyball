@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -15,6 +16,8 @@ import (
 	"github.com/arthur91f/spyball/internal/store"
 )
 
+const testAdminPassword = "s3cret"
+
 func newTestServer(t *testing.T) *Server {
 	t.Helper()
 	catalog, err := config.Load(spyball.Content)
@@ -25,7 +28,12 @@ func newTestServer(t *testing.T) *Server {
 	if err != nil {
 		t.Fatalf("store.Open: %v", err)
 	}
-	srv, err := New(catalog, st, "fr")
+	srv, err := New(catalog, st, Options{
+		Lang:          "fr",
+		AdminPassword: testAdminPassword,
+		SessionKey:    []byte("0123456789abcdef0123456789abcdef"),
+		NewRand:       func() *rand.Rand { return rand.New(rand.NewPCG(1, 2)) },
+	})
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}

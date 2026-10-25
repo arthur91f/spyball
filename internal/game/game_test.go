@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/arthur91f/spyball"
@@ -50,10 +51,10 @@ func TestAddPlayer(t *testing.T) {
 	if alice.Name != "Alice Martin" || alice.ID != "p1" {
 		t.Errorf("player = %+v, want name %q and id p1", alice, "Alice Martin")
 	}
-	if _, err := g.AddPlayer("alice martin"); err == nil {
+	if _, err := g.AddPlayer("alice martin"); !errors.Is(err, ErrDuplicateName) {
 		t.Error("duplicate name (other case): want error")
 	}
-	if _, err := g.AddPlayer("   "); err == nil {
+	if _, err := g.AddPlayer("   "); !errors.Is(err, ErrEmptyName) {
 		t.Error("empty name: want error")
 	}
 
@@ -219,10 +220,10 @@ func TestDraw(t *testing.T) {
 }
 
 func TestDrawIsRandomButReproducible(t *testing.T) {
-	assignment := func(g *Game) []config.SlotID {
-		var s []config.SlotID
+	assignment := func(g *Game) []string {
+		var s []string
 		for _, p := range g.Players {
-			s = append(s, p.Slot)
+			s = append(s, string(p.Slot)+":"+strings.Join(p.Signs, "|"))
 		}
 		return s
 	}
@@ -237,7 +238,7 @@ func TestDrawIsRandomButReproducible(t *testing.T) {
 func TestDrawNeedsExactPlayerCount(t *testing.T) {
 	theme, setup := loadContent(t)
 	g := newGameWithPlayers(t, setup.PlayerCount()-1)
-	if err := g.Draw(theme, setup, rand.New(rand.NewPCG(1, 0))); err == nil {
+	if err := g.Draw(theme, setup, rand.New(rand.NewPCG(1, 0))); !errors.Is(err, ErrPlayerCount) {
 		t.Fatal("draw with 11 players on a 12-player setup: want error")
 	}
 	if g.Phase != PhaseSetup {

@@ -1,0 +1,102 @@
+{{define "title"}}{{t "admin.title"}} · {{t "app.name"}}{{end}}
+
+{{define "content"}}
+<div class="page-head">
+    <h1>{{t "admin.title"}}</h1>
+    <form method="post" action="/admin/logout">
+        <button type="submit" class="secondary small">{{t "admin.logout"}}</button>
+    </form>
+</div>
+
+{{with .Error}}<p class="alert" role="alert">{{.}}</p>{{end}}
+
+{{if eq .Phase "setup"}}
+<section class="card">
+    <h2>{{tf "admin.players.title" (len .Players)}}</h2>
+    {{if .Players}}
+    <ul class="rows">
+        {{range .Players}}
+        <li>
+            <span>{{.Name}}</span>
+            <form method="post" action="/admin/players/{{.ID}}/delete">
+                <button type="submit" class="secondary small" aria-label="{{t "admin.players.remove"}} {{.Name}}">{{t "admin.players.remove"}}</button>
+            </form>
+        </li>
+        {{end}}
+    </ul>
+    {{else}}
+    <p class="muted">{{t "admin.players.none"}}</p>
+    {{end}}
+
+    <form method="post" action="/admin/players" class="stack">
+        <label for="names">{{t "admin.players.add_label"}}</label>
+        <textarea id="names" name="names" rows="4" placeholder="{{t "admin.players.add_placeholder"}}">{{.NamesInput}}</textarea>
+        <button type="submit">{{t "admin.players.add"}}</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>{{t "admin.draw.title"}}</h2>
+    {{if .Setups}}
+    <form method="post" action="/admin/draw" class="stack" onsubmit="return confirm({{t "admin.draw.confirm"}})">
+        <label for="theme">{{t "admin.draw.theme"}}</label>
+        <select id="theme" name="theme">
+            {{range .Themes}}<option value="{{.ID}}"{{if eq .ID $.SelectedTheme}} selected{{end}}>{{.Name}}</option>{{end}}
+        </select>
+        <label for="setup">{{t "admin.draw.setup"}}</label>
+        <select id="setup" name="setup">
+            {{range .Setups}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
+        </select>
+        <button type="submit">{{t "admin.draw.submit"}}</button>
+    </form>
+    {{else}}
+    <p>{{tf "admin.draw.no_setup" (len .Players)}}</p>
+    <ul>
+        {{range .AllSetups}}<li>{{.Name}} — {{tf "admin.draw.players" .PlayerCount}}</li>{{end}}
+    </ul>
+    {{end}}
+</section>
+{{end}}
+
+{{if eq .Phase "running"}}
+<section class="card">
+    <h2>{{t "admin.running.title"}}</h2>
+    <p>{{.ThemeName}} · {{.SetupName}}</p>
+    <p class="muted">{{t "admin.running.help"}}</p>
+    <form method="post" action="/admin/close" onsubmit="return confirm({{t "admin.running.close_confirm"}})">
+        <button type="submit">{{t "admin.running.close"}}</button>
+    </form>
+</section>
+
+<section class="card">
+    <h2>{{tf "admin.players.title" (len .Players)}}</h2>
+    <ul class="rows">
+        {{range .Players}}<li><span>{{.Name}}</span></li>{{end}}
+    </ul>
+</section>
+
+<section class="card">
+    <h2>{{t "admin.cancel.title"}}</h2>
+    <p class="muted">{{t "admin.cancel.help"}}</p>
+    <form method="post" action="/admin/cancel-draw" onsubmit="return confirm({{t "admin.cancel.confirm"}})">
+        <button type="submit" class="danger">{{t "admin.cancel.submit"}}</button>
+    </form>
+</section>
+{{end}}
+
+{{if eq .Phase "closed"}}
+<section class="card">
+    <h2>{{t "admin.closed.title"}}</h2>
+    <p>{{.ThemeName}} · {{.SetupName}}</p>
+    <p class="muted">{{t "admin.closed.help"}}</p>
+</section>
+{{end}}
+
+<section class="card">
+    <h2>{{t "admin.reset.title"}}</h2>
+    <p class="muted">{{t "admin.reset.help"}}</p>
+    <form method="post" action="/admin/reset" onsubmit="return confirm({{t "admin.reset.confirm"}})">
+        <button type="submit" class="danger">{{t "admin.reset.submit"}}</button>
+    </form>
+</section>
+{{end}}

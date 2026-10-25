@@ -1,0 +1,13 @@
+{{define "title"}}{{t "admin.login.title"}} · {{t "app.name"}}{{end}}
+
+{{define "content"}}
+<section class="card">
+    <h1>{{t "admin.login.title"}}</h1>
+    {{with .Error}}<p class="alert" role="alert">{{.}}</p>{{end}}
+    <form method="post" action="/admin/login" class="stack">
+        <label for="password">{{t "admin.login.password"}}</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+        <button type="submit">{{t "admin.login.submit"}}</button>
+    </form>
+</section>
+{{end}}

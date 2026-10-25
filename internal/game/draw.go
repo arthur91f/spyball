@@ -14,17 +14,17 @@ func (g *Game) Draw(theme *config.Theme, setup *config.Setup, rng *rand.Rand) er
 		return err
 	}
 	if len(g.Players) != setup.PlayerCount() {
-		return fmt.Errorf("setup %s is for %d players, game has %d", setup.ID, setup.PlayerCount(), len(g.Players))
+		return fmt.Errorf("%w: setup %s is for %d players, game has %d", ErrPlayerCount, setup.ID, setup.PlayerCount(), len(g.Players))
 	}
 	cast, err := theme.Cast(setup)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %w", ErrIncompatibleTheme, err)
 	}
 
 	// Shuffled copies of the sign lists, consumed from the end.
 	pools := map[config.Color][]string{}
-	for color, signs := range theme.Signs {
-		pool := append([]string(nil), signs...)
+	for _, color := range config.Colors { // fixed order: map iteration would make the draw irreproducible
+		pool := append([]string(nil), theme.Signs[color]...)
 		rng.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
 		pools[color] = pool
 	}

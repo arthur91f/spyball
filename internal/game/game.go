@@ -32,9 +32,15 @@ const (
 	GuessEnemy Guess = "enemy"
 )
 
+// Errors callers may want to tell apart, e.g. to show a translated message. Returned errors wrap them.
 var (
-	ErrWrongPhase    = errors.New("not allowed at this stage of the game")
-	ErrUnknownPlayer = errors.New("unknown player")
+	ErrWrongPhase        = errors.New("not allowed at this stage of the game")
+	ErrUnknownPlayer     = errors.New("unknown player")
+	ErrEmptyName         = errors.New("empty player name")
+	ErrDuplicateName     = errors.New("player name already used")
+	ErrPlayerCount       = errors.New("player count does not match the setup")
+	ErrIncompatibleTheme = errors.New("theme cannot be used with this setup")
+	ErrInvalid           = errors.New("invalid request")
 )
 
 // Game is the whole state of one game. Everything needed to play and score is copied into it
@@ -111,10 +117,10 @@ func (g *Game) AddPlayer(name string) (*Player, error) {
 	}
 	name = strings.Join(strings.Fields(name), " ")
 	if name == "" {
-		return nil, errors.New("empty player name")
+		return nil, ErrEmptyName
 	}
 	if _, exists := g.PlayerByName(name); exists {
-		return nil, fmt.Errorf("player %q already exists", name)
+		return nil, fmt.Errorf("%w: %q", ErrDuplicateName, name)
 	}
 
 	g.LastID++
@@ -150,7 +156,7 @@ func (g *Game) SetGuess(from, about PlayerID, guess Guess) error {
 		return err
 	}
 	if from == about {
-		return errors.New("cannot guess about yourself")
+		return fmt.Errorf("%w: cannot guess about yourself", ErrInvalid)
 	}
 
 	switch guess {
@@ -162,7 +168,7 @@ func (g *Game) SetGuess(from, about PlayerID, guess Guess) error {
 		}
 		p.Guesses[about] = guess
 	default:
-		return fmt.Errorf("unknown guess %q", guess)
+		return fmt.Errorf("%w: unknown guess %q", ErrInvalid, guess)
 	}
 	return nil
 }
@@ -177,13 +183,13 @@ func (g *Game) ChooseCamp(id PlayerID, camp config.Camp) error {
 		return err
 	}
 	if p.Color != config.White {
-		return errors.New("only white players choose their camp")
+		return fmt.Errorf("%w: only white players choose their camp", ErrInvalid)
 	}
 	switch camp {
 	case config.CampBlue, config.CampRed, config.CampNeutral:
 		p.Choice = camp
 	default:
-		return fmt.Errorf("unknown camp %q", camp)
+		return fmt.Errorf("%w: unknown camp %q", ErrInvalid, camp)
 	}
 	return nil
 }
@@ -206,7 +212,7 @@ func (g *Game) AddManualPoints(id PlayerID, points int, reason string) error {
 		return err
 	}
 	if points == 0 {
-		return errors.New("zero points")
+		return fmt.Errorf("%w: zero points", ErrInvalid)
 	}
 	g.ManualPoints = append(g.ManualPoints, ManualPoint{Player: id, Points: points, Reason: strings.TrimSpace(reason)})
 	return nil
@@ -218,7 +224,7 @@ func (g *Game) RemoveManualPoints(i int) error {
 		return err
 	}
 	if i < 0 || i >= len(g.ManualPoints) {
-		return fmt.Errorf("no manual points entry %d", i)
+		return fmt.Errorf("%w: no manual points entry %d", ErrInvalid, i)
 	}
 	g.ManualPoints = append(g.ManualPoints[:i], g.ManualPoints[i+1:]...)
 	return nil

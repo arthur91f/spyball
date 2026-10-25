@@ -108,3 +108,90 @@ textarea {
 .muted {
     color: var(--muted);
 }
+
+button.secondary,
+.button.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+button.danger,
+.button.danger {
+    background: var(--team-red);
+    color: #fff;
+}
+
+button.small,
+.button.small {
+    min-height: 2.25rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+label {
+    font-weight: 600;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stack button {
+    margin-top: 0.5rem;
+}
+
+.page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem var(--space);
+    margin-bottom: var(--space);
+}
+
+.page-head h1 {
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.page-head button {
+    white-space: nowrap;
+}
+
+.alert {
+    border: 1px solid var(--team-red);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--team-red) 15%, transparent);
+    padding: 0.75rem var(--space);
+}
+
+.rows {
+    list-style: none;
+    margin: 0 0 var(--space);
+    padding: 0;
+}
+
+.rows li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space);
+    min-height: 2.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.rows li:last-child {
+    border-bottom: none;
+}
+
+.footer-links {
+    text-align: center;
+    font-size: 0.875rem;
+}

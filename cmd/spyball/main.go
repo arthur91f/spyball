@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"flag"
 	"io/fs"
@@ -24,16 +25,18 @@ func main() {
 	addr := flag.String("addr", ":8080", "HTTP listen address")
 	contentDir := flag.String("content", "", "directory with themes/, setups/ and locales/ (default: content built into the binary)")
 	lang := flag.String("lang", "fr", "interface language, a file of locales/")
-	dataDir := flag.String("data", "data", "directory where the game state is saved")
+	dataDir := flag.String("data", "data", "directory where the game state and the session key are saved")
+	adminPassword := flag.String("admin-password", os.Getenv("SPYBALL_ADMIN_PASSWORD"),
+		"admin password (default: $SPYBALL_ADMIN_PASSWORD, or a random one printed at startup)")
 	flag.Parse()
 
-	if err := run(*addr, *contentDir, *lang, *dataDir); err != nil {
+	if err := run(*addr, *contentDir, *lang, *dataDir, *adminPassword); err != nil {
 		slog.Error("server stopped", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run(addr, contentDir, lang, dataDir string) error {
+func run(addr, contentDir, lang, dataDir, adminPassword string) error {
 	var content fs.FS = spyball.Content
 	if contentDir != "" {
 		content = os.DirFS(contentDir)
@@ -53,7 +56,16 @@ func run(addr, contentDir, lang, dataDir string) error {
 	}
 	slog.Info("game state", "file", st.Path())
 
-	srv, err := server.New(catalog, st, lang)
+	sessionKey, err := loadOrCreateKey(filepath.Join(dataDir, "session.key"))
+	if err != nil {
+		return err
+	}
+	if adminPassword == "" {
+		adminPassword = rand.Text()[:10]
+		slog.Warn("no admin password given, using a random one", "admin_password", adminPassword)
+	}
+
+	srv, err := server.New(catalog, st, server.Options{Lang: lang, AdminPassword: adminPassword, SessionKey: sessionKey})
 	if err != nil {
 		return err
 	}
@@ -86,4 +98,21 @@ func run(addr, contentDir, lang, dataDir string) error {
 		return err
 	}
 	return nil
+}
+
+// loadOrCreateKey returns the secret key stored at path, creating it on first run,
+// so player and admin sessions survive a server restart.
+func loadOrCreateKey(path string) ([]byte, error) {
+	key, err := os.ReadFile(path)
+	if err == nil && len(key) >= 32 {
+		return key, nil
+	}
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	key = make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		return nil, err
+	}
+	return key, os.WriteFile(path, key, 0o600)
 }

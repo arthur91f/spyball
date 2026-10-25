@@ -136,6 +136,7 @@ Séparation importante :
 ## Commandes
 ```bash
 go run ./cmd/spyball -addr :8080   # lance le serveur sur http://localhost:8080
+SPYBALL_ADMIN_PASSWORD=xxx go run ./cmd/spyball   # mot de passe admin (sinon il est généré et affiché au démarrage)
 go test ./...                      # tests
 go vet ./...
 go run ./cmd/spyball -content .   # lit thèmes/configurations/traductions sur disque au lieu du binaire
@@ -152,6 +153,15 @@ reçoit une copie de son emplacement, personnage, signes et indices : la partie 
 Phases `setup` → `running` → `closed` (`CancelDraw` permet de revenir à `setup` pour corriger la liste des joueurs).
 Le barème est regroupé en tête de `internal/game/score.go`. Le tirage reçoit un `*rand.Rand` (reproductible en test).
 `Game` n'est pas protégé contre les accès concurrents : c'est le rôle de l'appelant.
+
+Serveur web (`internal/server`) :
+- formulaires HTML classiques en POST, puis redirection (303) ; en cas d'erreur la page est ré-affichée avec le message.
+  Les erreurs métier de `internal/game` sont des sentinelles (`game.ErrDuplicateName`…) traduites via `errors.*` de la locale
+  (`internal/server/errors.go`) ;
+- sessions dans des cookies signés HMAC (`session.go`), clé conservée dans `<-data>/session.key` pour survivre aux redémarrages ;
+  cookies admin et joueur séparés (l'admin peut jouer depuis le même téléphone) ;
+- protection CSRF par `http.CrossOriginProtection` ; pages servies en `Cache-Control: no-store` ;
+- tests HTTP de bout en bout dans `*_test.go` avec `newTestClient` (cookies + redirections, comme un navigateur).
 
 Persistance (`internal/store`) : la partie est sauvegardée dans `<-data>/game.json` (par défaut `data/game.json`,
 ignoré par git). Toujours passer par `Store.Read` / `Store.Update` : `Update` travaille sur une copie, l'enregistre
@@ -174,7 +184,7 @@ Chaque étape est livrée testée, dans un commit à part.
 - [x] 2. Formats YAML et chargement validé : thème « bal des nations », configuration 12 joueurs, `locales/fr.yaml`.
 - [x] 3. Logique de jeu (`internal/game`) : état de la partie, tirage aléatoire, relations allié/ennemi, calcul des scores.
 - [x] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).
-- [ ] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
+- [x] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
 - [ ] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
 - [ ] 7. Page résultats : rôles dévoilés, suppositions, scores, ajout de points manuels par l'admin.
 - [ ] 8. Page règles, rendue selon le thème.

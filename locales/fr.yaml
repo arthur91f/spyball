@@ -1,4 +1,5 @@
 # Textes de l'interface. Les clés imbriquées s'utilisent avec des points : {{t "home.tagline"}}.
+# Les textes avec %d ou %s s'utilisent avec tf : {{tf "admin.players.title" 12}}.
 # Une clé manquante fait échouer le rendu de la page (et les tests).
 
 app:
@@ -6,3 +7,58 @@ app:
 
 home:
   tagline: Trouvez vos alliés, démasquez vos ennemis.
+  admin_link: Administration
+
+admin:
+  title: Administration
+  logout: Se déconnecter
+  login:
+    title: Connexion admin
+    password: Mot de passe admin
+    submit: Se connecter
+    wrong_password: Mot de passe incorrect.
+  players:
+    title: Joueurs (%d)
+    none: Aucun joueur pour l'instant.
+    remove: Retirer
+    add_label: Ajouter des joueurs (un nom par ligne)
+    add_placeholder: "Alice\nBob\nChloé"
+    add: Ajouter
+  draw:
+    title: Tirage des rôles
+    theme: Thème
+    setup: Configuration
+    submit: Tirer les rôles au sort
+    confirm: Tirer les rôles maintenant ? La liste des joueurs ne pourra plus être modifiée sans annuler le tirage.
+    no_setup: Aucune configuration n'existe pour %d joueurs. Ajoutez ou retirez des joueurs.
+    players: "%d joueurs"
+  running:
+    title: Partie en cours
+    help: >-
+      Les joueurs se connectent avec leur nom pour découvrir leur rôle.
+      Clôturez la partie à la fin de la soirée pour figer les suppositions et afficher les résultats.
+    close: Clôturer la partie
+    close_confirm: Clôturer la partie ? Les joueurs ne pourront plus modifier leurs suppositions.
+  cancel:
+    title: Annuler le tirage
+    help: Revient à la saisie des joueurs. Tous les rôles et toutes les suppositions seront perdus.
+    submit: Annuler le tirage
+    confirm: Annuler le tirage ? Tous les rôles et toutes les suppositions seront perdus.
+  closed:
+    title: Partie terminée
+    help: Les suppositions sont figées. Les résultats sont visibles par tous.
+  reset:
+    title: Nouvelle partie
+    help: Efface tout (joueurs, rôles, suppositions, points) pour recommencer de zéro.
+    submit: Commencer une nouvelle partie
+    confirm: Tout effacer et commencer une nouvelle partie ?
+
+errors:
+  generic: Une erreur inattendue s'est produite.
+  wrong_phase: Cette action n'est pas possible à ce stade de la partie.
+  unknown_player: Joueur inconnu.
+  empty_name: Le nom du joueur est vide.
+  duplicate_name: Ce nom est déjà utilisé.
+  player_count: Le nombre de joueurs ne correspond pas à la configuration choisie.
+  incompatible_theme: Ce thème ne peut pas être utilisé avec cette configuration.
+  invalid: Requête invalide.
