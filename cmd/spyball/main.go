@@ -10,27 +10,30 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/arthur91f/spyball"
 	"github.com/arthur91f/spyball/internal/config"
 	"github.com/arthur91f/spyball/internal/server"
+	"github.com/arthur91f/spyball/internal/store"
 )
 
 func main() {
 	addr := flag.String("addr", ":8080", "HTTP listen address")
 	contentDir := flag.String("content", "", "directory with themes/, setups/ and locales/ (default: content built into the binary)")
 	lang := flag.String("lang", "fr", "interface language, a file of locales/")
+	dataDir := flag.String("data", "data", "directory where the game state is saved")
 	flag.Parse()
 
-	if err := run(*addr, *contentDir, *lang); err != nil {
+	if err := run(*addr, *contentDir, *lang, *dataDir); err != nil {
 		slog.Error("server stopped", "err", err)
 		os.Exit(1)
 	}
 }
 
-func run(addr, contentDir, lang string) error {
+func run(addr, contentDir, lang, dataDir string) error {
 	var content fs.FS = spyball.Content
 	if contentDir != "" {
 		content = os.DirFS(contentDir)
@@ -41,7 +44,16 @@ func run(addr, contentDir, lang string) error {
 	}
 	slog.Info("content loaded", "themes", len(catalog.Themes), "setups", len(catalog.Setups), "locales", len(catalog.Locales))
 
-	srv, err := server.New(catalog, lang)
+	if err := os.MkdirAll(dataDir, 0o755); err != nil {
+		return err
+	}
+	st, err := store.Open(filepath.Join(dataDir, "game.json"))
+	if err != nil {
+		return err
+	}
+	slog.Info("game state", "file", st.Path())
+
+	srv, err := server.New(catalog, st, lang)
 	if err != nil {
 		return err
 	}

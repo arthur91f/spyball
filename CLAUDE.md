@@ -139,6 +139,7 @@ go run ./cmd/spyball -addr :8080   # lance le serveur sur http://localhost:8080
 go test ./...                      # tests
 go vet ./...
 go run ./cmd/spyball -content .   # lit thèmes/configurations/traductions sur disque au lieu du binaire
+go test -race ./...                # tests avec détection des accès concurrents
 ```
 Le contenu YAML est validé au démarrage (champs inconnus refusés, cohérence des emplacements et des indices,
 noms de personnages uniques…) : le serveur refuse de démarrer et liste toutes les erreurs.
@@ -151,6 +152,11 @@ reçoit une copie de son emplacement, personnage, signes et indices : la partie 
 Phases `setup` → `running` → `closed` (`CancelDraw` permet de revenir à `setup` pour corriger la liste des joueurs).
 Le barème est regroupé en tête de `internal/game/score.go`. Le tirage reçoit un `*rand.Rand` (reproductible en test).
 `Game` n'est pas protégé contre les accès concurrents : c'est le rôle de l'appelant.
+
+Persistance (`internal/store`) : la partie est sauvegardée dans `<-data>/game.json` (par défaut `data/game.json`,
+ignoré par git). Toujours passer par `Store.Read` / `Store.Update` : `Update` travaille sur une copie, l'enregistre
+(fichier temporaire puis renommage) et ne la rend visible que si tout a réussi. Un fichier illisible bloque le démarrage
+au lieu d'être écrasé ; supprimer `data/game.json` repart d'une partie vierge.
 
 Correspondance thème ↔ configuration : l'emplacement `<couleur>-N` reçoit le N-ième personnage de sa couleur ;
 un emplacement jaune reçoit le premier personnage jaune libre ayant la même `rule`.
@@ -167,7 +173,7 @@ Chaque étape est livrée testée, dans un commit à part.
 - [x] 1. Squelette : module Go, serveur HTTP, layout HTML commun, CSS de base, templates et assets embarqués.
 - [x] 2. Formats YAML et chargement validé : thème « bal des nations », configuration 12 joueurs, `locales/fr.yaml`.
 - [x] 3. Logique de jeu (`internal/game`) : état de la partie, tirage aléatoire, relations allié/ennemi, calcul des scores.
-- [ ] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).
+- [x] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).
 - [ ] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
 - [ ] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
 - [ ] 7. Page résultats : rôles dévoilés, suppositions, scores, ajout de points manuels par l'admin.

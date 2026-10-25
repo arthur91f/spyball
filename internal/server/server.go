@@ -11,6 +11,7 @@ import (
 	"path"
 
 	"github.com/arthur91f/spyball/internal/config"
+	"github.com/arthur91f/spyball/internal/store"
 	"github.com/arthur91f/spyball/web"
 )
 
@@ -22,12 +23,14 @@ const (
 // Server is the Spyball HTTP handler.
 type Server struct {
 	catalog *config.Catalog
+	store   *store.Store
 	mux     *http.ServeMux
 	pages   map[string]*template.Template
 }
 
 // New parses the embedded templates, with interface texts taken from the given locale, and registers the routes.
-func New(catalog *config.Catalog, lang string) (*Server, error) {
+// The game is read from and saved to st.
+func New(catalog *config.Catalog, st *store.Store, lang string) (*Server, error) {
 	locale, ok := catalog.Locales[lang]
 	if !ok {
 		return nil, fmt.Errorf("unknown locale %q", lang)
@@ -43,7 +46,7 @@ func New(catalog *config.Catalog, lang string) (*Server, error) {
 		return nil, err
 	}
 
-	s := &Server{catalog: catalog, mux: http.NewServeMux(), pages: pages}
+	s := &Server{catalog: catalog, store: st, mux: http.NewServeMux(), pages: pages}
 	s.mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	s.mux.HandleFunc("GET /{$}", s.handleHome)
 	return s, nil

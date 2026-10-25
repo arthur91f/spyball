@@ -5,12 +5,14 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
 
 	"github.com/arthur91f/spyball"
 	"github.com/arthur91f/spyball/internal/config"
+	"github.com/arthur91f/spyball/internal/store"
 )
 
 func newTestServer(t *testing.T) *Server {
@@ -19,7 +21,11 @@ func newTestServer(t *testing.T) *Server {
 	if err != nil {
 		t.Fatalf("config.Load: %v", err)
 	}
-	srv, err := New(catalog, "fr")
+	st, err := store.Open(filepath.Join(t.TempDir(), "game.json"))
+	if err != nil {
+		t.Fatalf("store.Open: %v", err)
+	}
+	srv, err := New(catalog, st, "fr")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
