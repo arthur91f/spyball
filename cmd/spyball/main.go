@@ -8,10 +8,12 @@ import (
 	"flag"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -79,10 +81,18 @@ func run(addr, contentDir, lang, dataDir, adminPassword string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+	slog.Info("server started", "addr", ln.Addr().String())
+	for _, url := range shareURLs(ln.Addr().(*net.TCPAddr)) {
+		slog.Info("players can join at", "url", url)
+	}
+
 	errCh := make(chan error, 1)
 	go func() {
-		slog.Info("server started", "addr", addr)
-		errCh <- httpServer.ListenAndServe()
+		errCh <- httpServer.Serve(ln)
 	}()
 
 	select {
@@ -115,4 +125,27 @@ func loadOrCreateKey(path string) ([]byte, error) {
 		return nil, err
 	}
 	return key, os.WriteFile(path, key, 0o600)
+}
+
+// shareURLs lists the addresses guests can type on their phone: one per local network address
+// when listening on all interfaces, else the listening address itself.
+func shareURLs(listen *net.TCPAddr) []string {
+	port := strconv.Itoa(listen.Port)
+	if !listen.IP.IsUnspecified() {
+		return []string{"http://" + net.JoinHostPort(listen.IP.String(), port)}
+	}
+
+	var urls []string
+	addrs, _ := net.InterfaceAddrs()
+	for _, a := range addrs {
+		ipnet, ok := a.(*net.IPNet)
+		if !ok || ipnet.IP.IsLoopback() || ipnet.IP.To4() == nil || ipnet.IP.IsLinkLocalUnicast() {
+			continue
+		}
+		urls = append(urls, "http://"+net.JoinHostPort(ipnet.IP.String(), port))
+	}
+	if len(urls) == 0 {
+		urls = append(urls, "http://localhost:"+port)
+	}
+	return urls
 }

@@ -469,3 +469,17 @@ fieldset:disabled .choice label {
 .theme-picker select {
     flex: 1;
 }
+
+.home .button {
+    display: block;
+    text-align: center;
+    margin-top: 0.75rem;
+}
+
+.home .button.secondary {
+    border: 1px solid var(--border);
+}
+
+.button {
+    line-height: 1.75rem;
+}

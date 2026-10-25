@@ -92,6 +92,7 @@ func New(catalog *config.Catalog, st *store.Store, opts Options) (*Server, error
 	mux := http.NewServeMux()
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	mux.HandleFunc("GET /{$}", s.handleHome)
+	mux.HandleFunc("GET /", s.handleNotFound)
 	s.registerAdmin(mux)
 	s.registerPlayer(mux)
 	s.registerResults(mux)
@@ -117,6 +118,11 @@ func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 	s.render(w, http.StatusOK, "home", page)
+}
+
+func (s *Server) handleNotFound(w http.ResponseWriter, r *http.Request) {
+	msg, _ := s.locale.T("errors.not_found")
+	s.render(w, http.StatusNotFound, "error", errorPage{Message: msg})
 }
 
 // parsePages builds one template set per page, each combining the shared layout

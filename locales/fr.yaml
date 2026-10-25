@@ -4,10 +4,12 @@
 
 app:
   name: Spyball
+  lang: fr
 
 home:
   tagline: Trouvez vos alliés, démasquez vos ennemis.
   login: Découvrir mon rôle
+  rules: Lire les règles
   admin_link: Administration
 
 login:
@@ -223,6 +225,7 @@ admin:
 
 errors:
   generic: Une erreur inattendue s'est produite.
+  not_found: Cette page n'existe pas.
   wrong_phase: Cette action n'est pas possible à ce stade de la partie.
   unknown_player: Joueur inconnu.
   empty_name: Le nom du joueur est vide.

@@ -248,6 +248,9 @@ func (s *Server) handleGuesses(w http.ResponseWriter, r *http.Request) {
 	s.withPlayer(w, r, func(id game.PlayerID) {
 		_ = r.ParseForm()
 		err := s.store.Update(func(g *game.Game) error {
+			if g.Phase != game.PhaseRunning {
+				return game.ErrWrongPhase // even for a form without any guess
+			}
 			for _, p := range g.Players {
 				values, ok := r.PostForm["guess_"+string(p.ID)]
 				if !ok || p.ID == id {

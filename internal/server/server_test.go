@@ -20,11 +20,17 @@ const testAdminPassword = "s3cret"
 
 func newTestServer(t *testing.T) *Server {
 	t.Helper()
+	return newTestServerAt(t, t.TempDir())
+}
+
+// newTestServerAt starts a server saving its game in dataDir; two servers on the same dir model a restart.
+func newTestServerAt(t *testing.T, dataDir string) *Server {
+	t.Helper()
 	catalog, err := config.Load(spyball.Content)
 	if err != nil {
 		t.Fatalf("config.Load: %v", err)
 	}
-	st, err := store.Open(filepath.Join(t.TempDir(), "game.json"))
+	st, err := store.Open(filepath.Join(dataDir, "game.json"))
 	if err != nil {
 		t.Fatalf("store.Open: %v", err)
 	}
@@ -52,7 +58,8 @@ func TestRoutes(t *testing.T) {
 	}{
 		{"home", "/", http.StatusOK, "text/html", "Trouvez vos alliés"},
 		{"stylesheet", "/static/style.css", http.StatusOK, "text/css", "--team-blue"},
-		{"unknown page", "/nope", http.StatusNotFound, "", ""},
+		{"unknown page", "/nope", http.StatusNotFound, "text/html", "Cette page n&#39;existe pas."},
+		{"favicon", "/static/favicon.svg", http.StatusOK, "image/svg+xml", "<svg"},
 		{"unknown asset", "/static/nope.css", http.StatusNotFound, "", ""},
 	}
 

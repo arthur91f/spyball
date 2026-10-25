@@ -148,6 +148,7 @@ Séparation importante :
 - La logique de jeu (`internal/game`) est couverte par des tests unitaires, en particulier le calcul des scores.
 
 ## Commandes
+Le [README](README.md) décrit l'usage (lancement, déroulé d'une soirée, ajout de thème / configuration / langue).
 ```bash
 go run ./cmd/spyball -addr :8080   # lance le serveur sur http://localhost:8080
 SPYBALL_ADMIN_PASSWORD=xxx go run ./cmd/spyball   # mot de passe admin (sinon il est généré et affiché au démarrage)
@@ -175,7 +176,10 @@ Serveur web (`internal/server`) :
 - sessions dans des cookies signés HMAC (`session.go`), clé conservée dans `<-data>/session.key` pour survivre aux redémarrages ;
   cookies admin et joueur séparés (l'admin peut jouer depuis le même téléphone) ;
 - protection CSRF par `http.CrossOriginProtection` ; pages servies en `Cache-Control: no-store` ;
-- tests HTTP de bout en bout dans `*_test.go` avec `newTestClient` (cookies + redirections, comme un navigateur).
+- tests HTTP dans `*_test.go` avec `newTestClient` (cookies + redirections, comme un navigateur) ;
+  `e2e_test.go` joue une partie complète uniquement par HTTP, vérifie les scores avec un calcul indépendant,
+  puis redémarre le serveur sur les mêmes données. À garder vert à chaque évolution des règles ;
+- au démarrage, le serveur affiche les adresses du réseau local à donner aux invités.
 - l'interface tutoie les joueurs : les textes des thèmes (descriptions de personnages…) aussi.
 
 Persistance (`internal/store`) : la partie est sauvegardée dans `<-data>/game.json` (par défaut `data/game.json`,
@@ -203,4 +207,4 @@ Chaque étape est livrée testée, dans un commit à part.
 - [x] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
 - [x] 7. Page résultats : rôles dévoilés, suppositions, scores, ajout de points manuels par l'admin.
 - [x] 8. Page règles, rendue selon le thème.
-- [ ] 9. Finitions : affichage mobile, test de bout en bout d'une partie complète, README (lancement, ajout d'un thème).
+- [x] 9. Finitions : affichage mobile, test de bout en bout d'une partie complète, README (lancement, ajout d'un thème).
