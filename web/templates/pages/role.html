@@ -1,0 +1,93 @@
+{{define "title"}}{{t "role.title"}} · {{t "app.name"}}{{end}}
+
+{{define "content"}}
+<div class="page-head">
+    <h1>{{t "role.title"}}</h1>
+    <form method="post" action="/logout">
+        <button type="submit" class="secondary small">{{t "role.logout"}}</button>
+    </form>
+</div>
+
+{{with .Error}}<p class="alert" role="alert">{{.}}</p>{{end}}
+{{if .Welcome}}<p class="notice" role="status">{{t "role.welcome"}}</p>{{end}}
+{{if .Closed}}<p class="notice" role="status">{{t "role.closed"}}</p>{{end}}
+
+<section class="card identity team-{{.Color}}">
+    <p class="muted">{{tf "role.you_are" .Name}}</p>
+    <h2 class="character">{{.Character}}</h2>
+    <p><span class="badge team-{{.Color}}">{{.TeamName}}</span></p>
+    {{with .Description}}<p>{{.}}</p>{{end}}
+    {{with .TeamHelp}}<p class="muted">{{.}}</p>{{end}}
+    {{if eq .Color "white"}}<p class="muted">{{t "role.white_help"}}</p>{{end}}
+    {{if eq .Rule "ally_of_everyone"}}<p class="muted">{{t "role.rules.ally_of_everyone"}}</p>{{end}}
+    {{if eq .Rule "enemy_of_everyone"}}<p class="muted">{{t "role.rules.enemy_of_everyone"}}</p>{{end}}
+</section>
+
+<section class="card">
+    <h2>{{t "role.signs.title"}}</h2>
+    <p class="muted">{{t "role.signs.help"}}</p>
+    <ul class="signs">
+        {{range .Signs}}
+        <li>{{with .For}}<span class="muted">{{tf "role.signs.for" .}}</span><br>{{end}}<strong>{{.Text}}</strong></li>
+        {{end}}
+    </ul>
+</section>
+
+<section class="card">
+    <h2>{{t "role.clues.title"}}</h2>
+    {{if .Clues}}
+    <p class="muted">{{t "role.clues.help"}}</p>
+    <ul class="signs">
+        {{range .Clues}}
+        <li><strong>{{.Character}}</strong> : {{range $i, $sign := .Signs}}{{if $i}} {{t "role.clues.or"}} {{end}}{{$sign}}{{end}}</li>
+        {{end}}
+    </ul>
+    {{else}}
+    <p class="muted">{{t "role.clues.none"}}</p>
+    {{end}}
+</section>
+
+{{if .Camps}}
+<section class="card" id="camp">
+    <h2>{{t "role.camp.title"}}</h2>
+    <form method="post" action="/me/camp" class="stack">
+        <fieldset class="stack plain"{{if .Closed}} disabled{{end}}>
+            <legend class="muted">{{t "role.camp.help"}}</legend>
+            {{range .Camps}}
+            <label class="radio-row">
+                <input type="radio" name="camp" value="{{.Value}}"{{if eq .Value $.Choice}} checked{{end}}>
+                <span class="badge team-{{.Value}}">{{.Name}}</span>
+            </label>
+            {{end}}
+            <button type="submit">{{t "role.camp.submit"}}</button>
+        </fieldset>
+    </form>
+</section>
+{{end}}
+
+<section class="card" id="guesses">
+    <h2>{{t "role.guesses.title"}}</h2>
+    {{if .Saved}}<p class="notice" role="status">{{t "role.guesses.saved"}}</p>{{end}}
+    <p class="muted">{{t "role.guesses.help"}}</p>
+    <form method="post" action="/me/guesses">
+        <fieldset class="plain"{{if .Closed}} disabled{{end}}>
+            <ul class="rows guesses">
+                {{range .Others}}
+                <li>
+                    <span class="guess-name">{{.Name}}</span>
+                    <span class="choice" role="radiogroup" aria-label="{{.Name}}">
+                        <input type="radio" id="g-{{.ID}}-ally" name="guess_{{.ID}}" value="ally" class="ally"{{if eq .Guess "ally"}} checked{{end}}>
+                        <label for="g-{{.ID}}-ally">{{t "role.guesses.ally"}}</label>
+                        <input type="radio" id="g-{{.ID}}-none" name="guess_{{.ID}}" value=""{{if eq .Guess ""}} checked{{end}}>
+                        <label for="g-{{.ID}}-none">{{t "role.guesses.none"}}</label>
+                        <input type="radio" id="g-{{.ID}}-enemy" name="guess_{{.ID}}" value="enemy" class="enemy"{{if eq .Guess "enemy"}} checked{{end}}>
+                        <label for="g-{{.ID}}-enemy">{{t "role.guesses.enemy"}}</label>
+                    </span>
+                </li>
+                {{end}}
+            </ul>
+            <button type="submit">{{t "role.guesses.submit"}}</button>
+        </fieldset>
+    </form>
+</section>
+{{end}}

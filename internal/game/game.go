@@ -41,6 +41,8 @@ var (
 	ErrPlayerCount       = errors.New("player count does not match the setup")
 	ErrIncompatibleTheme = errors.New("theme cannot be used with this setup")
 	ErrInvalid           = errors.New("invalid request")
+	ErrCharacterRequired = errors.New("character name required to log in again")
+	ErrWrongCharacter    = errors.New("wrong character name")
 )
 
 // Game is the whole state of one game. Everything needed to play and score is copied into it
@@ -72,8 +74,11 @@ type Player struct {
 	Clues []PlayerID `json:"clues,omitempty"`
 
 	// Set while playing.
-	Choice  config.Camp        `json:"choice,omitempty"` // white players only; empty means neutral
-	Guesses map[PlayerID]Guess `json:"guesses,omitempty"`
+	// Revealed is true once the player has logged in and seen their character; from then on,
+	// logging in requires the character name too.
+	Revealed bool               `json:"revealed,omitempty"`
+	Choice   config.Camp        `json:"choice,omitempty"` // white players only; empty means neutral
+	Guesses  map[PlayerID]Guess `json:"guesses,omitempty"`
 }
 
 // ManualPoint is a bonus or penalty given by the admin when results are shown
@@ -191,6 +196,43 @@ func (g *Game) ChooseCamp(id PlayerID, camp config.Camp) error {
 	default:
 		return fmt.Errorf("%w: unknown camp %q", ErrInvalid, camp)
 	}
+	return nil
+}
+
+// Login identifies a player by name. The first time, the name is enough and the character is revealed;
+// afterwards the character name is required, compared with config.NormalizeName.
+// Players can log in while the game runs and after it is closed.
+func (g *Game) Login(name, character string) (*Player, error) {
+	if g.Phase == PhaseSetup {
+		return nil, fmt.Errorf("%w: roles are not drawn yet", ErrWrongPhase)
+	}
+	p, ok := g.PlayerByName(name)
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnknownPlayer, name)
+	}
+	if !p.Revealed {
+		p.Revealed = true
+		return p, nil
+	}
+	switch {
+	case config.NormalizeName(character) == "":
+		return nil, ErrCharacterRequired
+	case config.NormalizeName(character) != config.NormalizeName(p.Character):
+		return nil, ErrWrongCharacter
+	}
+	return p, nil
+}
+
+// ResetLogin lets a player who forgot their character log in again with their name only.
+func (g *Game) ResetLogin(id PlayerID) error {
+	if err := g.requirePhase(PhaseRunning); err != nil {
+		return err
+	}
+	p, err := g.Player(id)
+	if err != nil {
+		return err
+	}
+	p.Revealed = false
 	return nil
 }
 

@@ -91,7 +91,10 @@ Les règles spéciales doivent être décrites dans la config (YAML), pas codée
 **Authentification des joueurs** :
 - première connexion : le joueur donne son nom (choisi dans la liste saisie par l'admin) ; le site lui révèle le nom de son personnage ;
 - connexions suivantes : nom + nom du personnage. Le personnage étant secret, il sert de mot de passe.
-- session par cookie ; un joueur déconnecté ne peut plus voir son rôle.
+- session par cookie ; un joueur déconnecté ne peut plus voir son rôle. La session n'est valable que tant que le joueur
+  garde ce personnage : annuler le tirage ou commencer une nouvelle partie déconnecte tout le monde ;
+- un joueur qui a oublié son personnage demande à l'admin de « réinitialiser » sa connexion (il se reconnecte alors
+  avec son seul nom). La page admin indique seulement qui s'est déjà connecté, jamais les rôles.
 
 **L'admin pouvant jouer**, la page admin ne doit jamais afficher l'attribution des rôles, les signes
 ni les suppositions avant la clôture. L'admin est authentifié séparément (mot de passe passé au lancement du serveur).
@@ -162,6 +165,7 @@ Serveur web (`internal/server`) :
   cookies admin et joueur séparés (l'admin peut jouer depuis le même téléphone) ;
 - protection CSRF par `http.CrossOriginProtection` ; pages servies en `Cache-Control: no-store` ;
 - tests HTTP de bout en bout dans `*_test.go` avec `newTestClient` (cookies + redirections, comme un navigateur).
+- l'interface tutoie les joueurs : les textes des thèmes (descriptions de personnages…) aussi.
 
 Persistance (`internal/store`) : la partie est sauvegardée dans `<-data>/game.json` (par défaut `data/game.json`,
 ignoré par git). Toujours passer par `Store.Read` / `Store.Update` : `Update` travaille sur une copie, l'enregistre
@@ -185,7 +189,7 @@ Chaque étape est livrée testée, dans un commit à part.
 - [x] 3. Logique de jeu (`internal/game`) : état de la partie, tirage aléatoire, relations allié/ennemi, calcul des scores.
 - [x] 4. Persistance de l'état sur disque (JSON, écriture atomique, accès concurrent protégé).
 - [x] 5. Page admin : connexion admin, liste des joueurs, choix thème/configuration, tirage, clôture.
-- [ ] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
+- [x] 6. Login joueur et page « Mon rôle » : rôle, signe, indices, suppositions, choix de camp des `white`.
 - [ ] 7. Page résultats : rôles dévoilés, suppositions, scores, ajout de points manuels par l'admin.
 - [ ] 8. Page règles, rendue selon le thème.
 - [ ] 9. Finitions : affichage mobile, test de bout en bout d'une partie complète, README (lancement, ajout d'un thème).

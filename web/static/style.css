@@ -195,3 +195,136 @@ textarea {
     text-align: center;
     font-size: 0.875rem;
 }
+
+.hint {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.notice {
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    padding: 0.75rem var(--space);
+}
+
+fieldset.plain {
+    border: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+/* Team colors: .team-<color or camp> on a card adds a colored edge, on a badge fills it. */
+.team-blue { --team: var(--team-blue); }
+.team-red { --team: var(--team-red); }
+.team-white { --team: var(--team-white); }
+.team-yellow { --team: var(--team-yellow); }
+.team-neutral { --team: var(--team-white); }
+
+.card.identity {
+    border-left: 0.4rem solid var(--team);
+}
+
+.character {
+    font-size: 2rem;
+    margin: 0 0 0.5rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: var(--team);
+    color: #111;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.team-blue.badge,
+.team-red.badge {
+    color: #fff;
+}
+
+.signs {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.signs li + li {
+    margin-top: 0.5rem;
+}
+
+.radio-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    font-weight: normal;
+}
+
+input[type="radio"] {
+    width: auto;
+    min-height: 0;
+    accent-color: var(--accent);
+}
+
+.guesses li {
+    flex-wrap: wrap;
+    padding: 0.4rem 0;
+}
+
+.guess-name {
+    flex: 1 1 8rem;
+}
+
+/* Segmented control: the radio is hidden, its label is the button. */
+.choice {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.choice input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.choice label {
+    min-width: 3.25rem;
+    padding: 0.5rem 0.7rem;
+    text-align: center;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.choice label + input + label {
+    border-left: 1px solid var(--border);
+}
+
+.choice input:checked + label {
+    background: var(--border);
+}
+
+.choice input.ally:checked + label {
+    background: #2e9d5b;
+    color: #fff;
+}
+
+.choice input.enemy:checked + label {
+    background: var(--team-red);
+    color: #fff;
+}
+
+.choice input:focus-visible + label {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+fieldset:disabled .choice label {
+    cursor: default;
+    opacity: 0.7;
+}

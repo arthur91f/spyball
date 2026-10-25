@@ -52,28 +52,22 @@ characters:
     - name: Cuba
   white:
     - name: Inde
-      description: >-
-        Vous êtes courtisé par tout le monde. Avant la fin de la soirée, choisissez de rejoindre
-        les Démocraties, les Puissances autoritaires, ou de rester non aligné.
+      description: Puissance montante, tu es courtisée par tout le monde.
     - name: Brésil
-      description: >-
-        Vous êtes courtisé par tout le monde. Avant la fin de la soirée, choisissez de rejoindre
-        les Démocraties, les Puissances autoritaires, ou de rester non aligné.
+      description: Géant du Sud, tu es courtisé par tout le monde.
     - name: Turquie
-      description: >-
-        Vous êtes courtisé par tout le monde. Avant la fin de la soirée, choisissez de rejoindre
-        les Démocraties, les Puissances autoritaires, ou de rester non aligné.
+      description: À la croisée des chemins, tu es courtisée par tout le monde.
   yellow:
     - name: ONG P.L.S.
       rule: ally_of_everyone
       description: >-
-        Vous organisez le gala et savez bien que la plupart des invités ne sont pas là pour la cause.
-        Tout le monde a intérêt à vous désigner comme allié.
+        Tu organises le gala et tu sais bien que la plupart des invités ne sont pas là pour la cause.
+        Tout le monde a intérêt à te désigner comme allié.
     - name: Anonymous
       rule: enemy_of_everyone
       description: >-
-        Vous avez espionné presque tout le monde. Tout le monde a intérêt à vous désigner comme ennemi :
-        faites-vous passer pour un allié.
+        Tu as espionné presque tout le monde. Tout le monde a intérêt à te désigner comme ennemi :
+        fais-toi passer pour un allié.
 
 signs:
   blue:

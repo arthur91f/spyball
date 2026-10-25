@@ -262,3 +262,51 @@ func TestCancelDraw(t *testing.T) {
 		}
 	}
 }
+
+func TestLogin(t *testing.T) {
+	g := newGameWithPlayers(t, 1)
+	if _, err := g.Login("Guest 1", ""); !errors.Is(err, ErrWrongPhase) {
+		t.Errorf("login before the draw: err = %v, want ErrWrongPhase", err)
+	}
+
+	g = drawnGame(t, 1)
+	p := g.Players[0]
+
+	if _, err := g.Login("Nobody", ""); !errors.Is(err, ErrUnknownPlayer) {
+		t.Errorf("unknown name: err = %v, want ErrUnknownPlayer", err)
+	}
+
+	// First login: the name is enough, the character gets revealed.
+	got, err := g.Login(" guest 1 ", "")
+	if err != nil || got != p || !p.Revealed {
+		t.Fatalf("first login: player %v, err %v, revealed %v", got, err, p.Revealed)
+	}
+
+	// Next logins need the character.
+	if _, err := g.Login("Guest 1", ""); !errors.Is(err, ErrCharacterRequired) {
+		t.Errorf("second login without character: err = %v, want ErrCharacterRequired", err)
+	}
+	if _, err := g.Login("Guest 1", "Atlantide"); !errors.Is(err, ErrWrongCharacter) {
+		t.Errorf("wrong character: err = %v, want ErrWrongCharacter", err)
+	}
+	if _, err := g.Login("Guest 1", "  "+strings.ToUpper(p.Character)+" "); err != nil {
+		t.Errorf("right character, other case: %v", err)
+	}
+
+	// The admin can reset a forgotten character.
+	if err := g.ResetLogin(p.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := g.Login("Guest 1", ""); err != nil {
+		t.Errorf("login after reset: %v", err)
+	}
+
+	// Logging in still works once the game is closed, to look at your own page.
+	_ = g.Close()
+	if _, err := g.Login("Guest 1", p.Character); err != nil {
+		t.Errorf("login after close: %v", err)
+	}
+	if err := g.ResetLogin(p.ID); !errors.Is(err, ErrWrongPhase) {
+		t.Errorf("reset login after close: err = %v, want ErrWrongPhase", err)
+	}
+}

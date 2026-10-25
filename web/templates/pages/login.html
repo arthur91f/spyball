@@ -1,0 +1,25 @@
+{{define "title"}}{{t "login.title"}} · {{t "app.name"}}{{end}}
+
+{{define "content"}}
+<section class="card">
+    <h1>{{t "login.title"}}</h1>
+    {{if eq .Phase "setup"}}
+    <p>{{t "login.not_started"}}</p>
+    {{else}}
+    {{with .Error}}<p class="alert" role="alert">{{.}}</p>{{end}}
+    <form method="post" action="/login" class="stack">
+        <label for="name">{{t "login.name"}}</label>
+        <select id="name" name="name" required{{if not .NeedsChar}} autofocus{{end}}>
+            <option value="">{{t "login.choose_name"}}</option>
+            {{range .Names}}<option value="{{.}}"{{if eq . $.Name}} selected{{end}}>{{.}}</option>{{end}}
+        </select>
+
+        <label for="character">{{t "login.character"}}</label>
+        <input id="character" name="character" type="text" autocomplete="off" autocapitalize="words"{{if .NeedsChar}} autofocus{{end}}>
+        <p class="muted hint">{{t "login.character_help"}}</p>
+
+        <button type="submit">{{t "login.submit"}}</button>
+    </form>
+    {{end}}
+</section>
+{{end}}

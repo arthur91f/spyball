@@ -92,6 +92,7 @@ func New(catalog *config.Catalog, st *store.Store, opts Options) (*Server, error
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	mux.HandleFunc("GET /{$}", s.handleHome)
 	s.registerAdmin(mux)
+	s.registerPlayer(mux)
 
 	// Rejects cross-site form submissions (CSRF) based on the browser's Origin / Sec-Fetch-Site headers.
 	s.handler = http.NewCrossOriginProtection().Handler(mux)

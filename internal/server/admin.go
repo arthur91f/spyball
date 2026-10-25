@@ -23,6 +23,7 @@ func (s *Server) registerAdmin(mux *http.ServeMux) {
 	mux.Handle("GET /admin", s.requireAdmin(s.handleAdmin))
 	mux.Handle("POST /admin/players", s.requireAdmin(s.handleAddPlayers))
 	mux.Handle("POST /admin/players/{id}/delete", s.requireAdmin(s.handleRemovePlayer))
+	mux.Handle("POST /admin/players/{id}/reset-login", s.requireAdmin(s.handleResetLogin))
 	mux.Handle("POST /admin/draw", s.requireAdmin(s.handleDraw))
 	mux.Handle("POST /admin/cancel-draw", s.requireAdmin(s.handleCancelDraw))
 	mux.Handle("POST /admin/close", s.requireAdmin(s.handleClose))
@@ -99,8 +100,9 @@ type adminPage struct {
 }
 
 type adminPlayer struct {
-	ID   game.PlayerID
-	Name string
+	ID       game.PlayerID
+	Name     string
+	Revealed bool // has logged in at least once; reveals nothing about the role
 }
 
 func (s *Server) adminPage(errMsg, namesInput string) adminPage {
@@ -108,7 +110,7 @@ func (s *Server) adminPage(errMsg, namesInput string) adminPage {
 	_ = s.store.Read(func(g *game.Game) error {
 		page.Phase = g.Phase
 		for _, p := range g.Players {
-			page.Players = append(page.Players, adminPlayer{ID: p.ID, Name: p.Name})
+			page.Players = append(page.Players, adminPlayer{ID: p.ID, Name: p.Name, Revealed: p.Revealed})
 		}
 		page.SelectedTheme = g.ThemeID
 		if t := s.catalog.Themes[g.ThemeID]; t != nil {
@@ -185,6 +187,12 @@ func (s *Server) handleAddPlayers(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleRemovePlayer(w http.ResponseWriter, r *http.Request) {
 	id := game.PlayerID(r.PathValue("id"))
 	s.adminUpdate(w, r, func(g *game.Game) error { return g.RemovePlayer(id) })
+}
+
+// handleResetLogin lets a player who forgot their character log in again with their name only.
+func (s *Server) handleResetLogin(w http.ResponseWriter, r *http.Request) {
+	id := game.PlayerID(r.PathValue("id"))
+	s.adminUpdate(w, r, func(g *game.Game) error { return g.ResetLogin(id) })
 }
 
 func (s *Server) handleDraw(w http.ResponseWriter, r *http.Request) {

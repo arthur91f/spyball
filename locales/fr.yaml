@@ -7,7 +7,62 @@ app:
 
 home:
   tagline: Trouvez vos alliés, démasquez vos ennemis.
+  login: Découvrir mon rôle
   admin_link: Administration
+
+login:
+  title: Connexion
+  not_started: La partie n'a pas encore commencé. Reviens quand l'organisateur aura tiré les rôles au sort.
+  name: Ton nom
+  choose_name: Choisis ton nom…
+  character: Ton personnage
+  character_help: >-
+    Laisse vide à ta première connexion : on te dévoilera ton personnage.
+    Ensuite, il te servira de mot de passe.
+  submit: Entrer
+
+role:
+  title: Mon rôle
+  logout: Se déconnecter
+  welcome: >-
+    Retiens bien le nom de ton personnage : il te servira de mot de passe pour te reconnecter.
+    Et garde-le secret !
+  closed: La partie est terminée, tes suppositions ne peuvent plus être modifiées.
+  you_are: "%s, tu es :"
+  white_help: >-
+    Tu n'appartiens à aucun camp : avant la fin de la partie, choisis de rejoindre l'un des deux camps
+    ou de rester neutre. Pour le score, tu compteras entièrement comme membre du camp choisi.
+  rules:
+    ally_of_everyone: Pour le décompte des points, tu es l'allié de tout le monde.
+    enemy_of_everyone: Pour le décompte des points, tu es l'ennemi de tout le monde.
+  signs:
+    title: Ton signe
+    help: >-
+      Fais-le régulièrement pendant la soirée pour que tes alliés te repèrent,
+      mais pas trop : les joueurs attentifs pourraient se méfier.
+    for: "Pour te faire reconnaître des %s :"
+  clues:
+    title: Tes indices
+    help: "Tu reconnaîtras ces personnages à leur signe :"
+    none: Tu n'as aucun indice. À toi d'observer !
+    or: ou
+  camp:
+    title: Ton camp
+    help: Tu peux changer d'avis jusqu'à la fin de la partie.
+    submit: Enregistrer mon choix
+  guesses:
+    title: Mes suppositions
+    help: >-
+      Pour chaque joueur, indique si tu penses qu'il est ton allié ou ton ennemi.
+      Bonne réponse : +1 point, mauvaise réponse : −1 point. Laisse « ? » si tu ne sais pas.
+    ally: Allié
+    none: "?"
+    enemy: Ennemi
+    submit: Enregistrer mes suppositions
+    saved: Suppositions enregistrées.
+
+error:
+  home: Retour à l'accueil
 
 admin:
   title: Administration
@@ -39,6 +94,14 @@ admin:
       Clôturez la partie à la fin de la soirée pour figer les suppositions et afficher les résultats.
     close: Clôturer la partie
     close_confirm: Clôturer la partie ? Les joueurs ne pourront plus modifier leurs suppositions.
+  login_status:
+    help: >-
+      Un joueur qui a oublié son personnage peut se reconnecter avec son seul nom
+      si vous réinitialisez sa connexion.
+    logged_in: Connecté
+    not_yet: Pas encore connecté
+    reset: Réinitialiser
+    reset_confirm: "Réinitialiser la connexion de %s ? Il pourra se reconnecter avec son seul nom."
   cancel:
     title: Annuler le tirage
     help: Revient à la saisie des joueurs. Tous les rôles et toutes les suppositions seront perdus.
@@ -61,4 +124,6 @@ errors:
   duplicate_name: Ce nom est déjà utilisé.
   player_count: Le nombre de joueurs ne correspond pas à la configuration choisie.
   incompatible_theme: Ce thème ne peut pas être utilisé avec cette configuration.
+  character_required: "Tu t'es déjà connecté une fois : indique aussi le nom de ton personnage."
+  wrong_character: Ce n'est pas le bon personnage.
   invalid: Requête invalide.

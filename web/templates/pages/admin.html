@@ -70,8 +70,18 @@
 
 <section class="card">
     <h2>{{tf "admin.players.title" (len .Players)}}</h2>
+    <p class="muted">{{t "admin.login_status.help"}}</p>
     <ul class="rows">
-        {{range .Players}}<li><span>{{.Name}}</span></li>{{end}}
+        {{range .Players}}
+        <li>
+            <span>{{.Name}}<br><small class="muted">{{if .Revealed}}{{t "admin.login_status.logged_in"}}{{else}}{{t "admin.login_status.not_yet"}}{{end}}</small></span>
+            {{if .Revealed}}
+            <form method="post" action="/admin/players/{{.ID}}/reset-login" onsubmit="return confirm({{tf "admin.login_status.reset_confirm" .Name}})">
+                <button type="submit" class="secondary small">{{t "admin.login_status.reset"}}</button>
+            </form>
+            {{end}}
+        </li>
+        {{end}}
     </ul>
 </section>
 
