@@ -63,8 +63,8 @@ Deux joueurs du même camp sont alliés ; deux joueurs de camps différents sont
 
 L'admin clôture la saisie. Puis, pour chaque joueur (traîtres compris) :
 - +2 par allié désigné comme allié, +2 par ennemi désigné comme ennemi ;
-- 0 par erreur (allié désigné comme ennemi ou ennemi désigné comme allié) ;
-- +1 par joueur qui l'a désigné comme allié, −2 par joueur qui l'a désigné comme ennemi,
+- −2 par erreur (allié désigné comme ennemi ou ennemi désigné comme allié) ;
+- +3 par joueur qui l'a désigné comme allié, −5 par joueur qui l'a désigné comme ennemi,
   **que la supposition soit juste ou non** ;
 - les défis ne rapportent rien à un joueur en particulier : voir le camp des traîtres ci-dessous ;
 - points attribués manuellement par l'admin pendant l'affichage des résultats : dénonciations publiques, bonus divers.
@@ -72,7 +72,7 @@ L'admin clôture la saisie. Puis, pour chaque joueur (traîtres compris) :
 Ce barème est regroupé en tête de `internal/game/score.go` ; il pourra être revu (il doit rester isolé et facile à modifier).
 
 Score d'un camp = somme des scores de ses membres **qui ne sont pas traîtres** (si les camps n'ont pas autant
-de membres comptés, le plus nombreux est avantagé : à garder en tête en écrivant les configurations). Score du **camp des traîtres** = somme des scores des traîtres + 4 par défi réalisé (coché par l'admin une fois la partie
+de membres comptés, le plus nombreux est avantagé : à garder en tête en écrivant les configurations). Score du **camp des traîtres** = somme des scores des traîtres + 10 par défi réalisé (coché par l'admin une fois la partie
 clôturée, quel que soit le traître qui l'a fait). Les trois camps sont classés ensemble. Les scores peuvent être négatifs.
 
 ## Pages
@@ -96,7 +96,8 @@ clôturée, quel que soit le traître qui l'a fait). Les trois camps sont class�
 
 **Règles** (`/rules`, lien dans l'en-tête de chaque page) : texte générique dans `rules.*` de la locale, habillé par
 le thème (récit `story`, noms et descriptions des camps, nom des traîtres). Thème affiché : `?theme=<id>`, sinon
-celui de la partie, sinon le premier.
+celui de la partie, sinon le premier. Un thème peut remplacer des textes `rules.*` par les siens (`rules:` du thème,
+`Theme.RuleText`, fonction de template `rule`) ; `**mot**` s'affiche en gras dans ces textes et ceux du thème (`rich`).
 
 **Résultats** (`/results`) : visibles par tous une fois la partie clôturée (avant, la page dit seulement d'attendre).
 Classement des camps (gagnant mis en avant ; les couleurs sans leurs traîtres, puis le camp des traîtres), classement de tous les joueurs
