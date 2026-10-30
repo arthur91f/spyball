@@ -18,6 +18,7 @@ var errorKeys = []struct {
 	{game.ErrDuplicateName, "errors.duplicate_name"},
 	{game.ErrPlayerCount, "errors.player_count"},
 	{game.ErrIncompatibleTheme, "errors.incompatible_theme"},
+	{game.ErrNoSetup, "errors.no_setup"},
 	{game.ErrCharacterRequired, "errors.character_required"},
 	{game.ErrWrongCharacter, "errors.wrong_character"},
 	{game.ErrInvalid, "errors.invalid"},

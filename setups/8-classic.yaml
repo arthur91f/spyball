@@ -1,0 +1,28 @@
+# Configuration à 8 joueurs : deux camps de 4, dont un traître dans chaque camp.
+#
+# Chaque emplacement s'écrit <couleur>-<numéro> (blue ou red). Les numéros d'une couleur se suivent à partir de 1.
+#   traitor : true pour un traître (membre ordinaire de son camp, avec des défis et un classement à part) ;
+#             environ un tous les 4 ou 5 joueurs, répartis comme on veut entre les camps
+#   clues   : emplacements dont ce joueur connaît le signe
+# weight     : poids de la configuration au tirage. Parmi les configurations prévues pour le nombre de joueurs,
+#              l'une est tirée au sort avec une chance proportionnelle à son poids (0 : jamais tirée).
+# challenges : nombre de défis tirés pour la partie, les mêmes pour tous les traîtres
+
+name: Classique à 8
+description: >-
+  Deux camps de quatre, avec un traître caché dans chaque camp.
+  Chacun connaît le signe de deux alliés.
+
+weight: 1
+challenges: 2
+
+slots:
+  blue-1: { traitor: true, clues: [blue-2, blue-4] }
+  blue-2: { clues: [blue-3, blue-1] }
+  blue-3: { clues: [blue-4, blue-2] }
+  blue-4: { clues: [blue-1, blue-3] }
+
+  red-1: { traitor: true, clues: [red-2, red-4] }
+  red-2: { clues: [red-3, red-1] }
+  red-3: { clues: [red-4, red-2] }
+  red-4: { clues: [red-1, red-3] }

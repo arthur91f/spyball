@@ -9,8 +9,7 @@
 
     --team-blue: #3b82f6;
     --team-red: #e0414e;
-    --team-yellow: #e3c800;
-    --team-white: #f2f2f2;
+    --traitor: #e3c800;
 
     --radius: 0.75rem;
     --space: 1rem;
@@ -215,12 +214,11 @@ fieldset.plain {
     min-width: 0;
 }
 
-/* Team colors: .team-<color or camp> on a card adds a colored edge, on a badge fills it. */
+/* Team colors: .team-<color> on a card adds a colored edge, on a badge fills it. */
 .team-blue { --team: var(--team-blue); }
 .team-red { --team: var(--team-red); }
-.team-white { --team: var(--team-white); }
-.team-yellow { --team: var(--team-yellow); }
-.team-neutral { --team: var(--team-white); }
+.badge.traitor,
+.team-traitors { --team: var(--traitor); }
 
 .card.identity {
     border-left: 0.4rem solid var(--team);
@@ -263,10 +261,17 @@ fieldset.plain {
     font-weight: normal;
 }
 
-input[type="radio"] {
+input[type="radio"],
+input[type="checkbox"] {
     width: auto;
     min-height: 0;
     accent-color: var(--accent);
+}
+
+input[type="checkbox"] {
+    width: 1.4rem;
+    height: 1.4rem;
+    flex-shrink: 0;
 }
 
 .guesses li {
@@ -482,4 +487,14 @@ fieldset:disabled .choice label {
 
 .button {
     line-height: 1.75rem;
+}
+
+/* One challenge shared by the traitors, with who did it. */
+.challenges li.challenge-group {
+    display: block;
+    padding: 0.5rem 0;
+}
+
+.status.validated {
+    color: #2e9d5b;
 }

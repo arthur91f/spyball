@@ -69,18 +69,16 @@ func TestFullGameSurvivesRestart(t *testing.T) {
 		if err := g.Draw(theme, setup, rand.New(rand.NewPCG(1, 2))); err != nil {
 			return err
 		}
-		for _, p := range g.Players {
-			if p.Color == config.White {
-				_ = g.ChooseCamp(p.ID, config.CampRed)
-			}
-		}
 		if err := g.SetGuess(g.Players[0].ID, g.Players[1].ID, game.GuessAlly); err != nil {
 			return err
 		}
 		if err := g.Close(); err != nil {
 			return err
 		}
-		return g.AddManualPoints(g.Players[2].ID, 2, "défi réussi")
+		if err := g.SetChallengesDone([]bool{true, false, true}); err != nil {
+			return err
+		}
+		return g.AddManualPoints(g.Players[2].ID, 2, "dénonciation")
 	})
 	if err != nil {
 		t.Fatalf("Update: %v", err)

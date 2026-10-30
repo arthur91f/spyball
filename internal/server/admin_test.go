@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"net/http/cookiejar"
 	"net/http/httptest"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/arthur91f/spyball/internal/config"
 	"github.com/arthur91f/spyball/internal/game"
 )
 
@@ -144,14 +146,16 @@ func TestAdminGameLifecycle(t *testing.T) {
 		t.Fatalf("%d players added by a failed batch, want 0", n)
 	}
 
-	_, body = c.post("/admin/players", url.Values{"names": {guestNames(11)}})
-	if !strings.Contains(body, "Joueurs (11)") || !strings.Contains(body, "Aucune configuration n&#39;existe pour 11 joueurs") {
-		t.Errorf("11 players: page does not say no setup fits:\n%s", body)
+	// Below the minimum number of players, no setup can exist.
+	_, body = c.post("/admin/players", url.Values{"names": {guestNames(config.MinPlayers - 1)}})
+	if !strings.Contains(body, "Aucune configuration n&#39;existe pour 5 joueurs") {
+		t.Errorf("5 players: page does not say no setup fits:\n%s", body)
 	}
 
-	_, body = c.post("/admin/players", url.Values{"names": {"Douzième\n\n"}})
-	if !strings.Contains(body, "Joueurs (12)") || !strings.Contains(body, `value="12-classic"`) {
-		t.Errorf("12 players: classic setup not offered:\n%s", body)
+	_, body = c.post("/admin/players", url.Values{"names": {"Invité 6\nInvité 7\nInvité 8\nInvité 9\nInvité 10\nInvité 11\nDouzième\n\n"}})
+	if !strings.Contains(body, "Joueurs (12)") || !strings.Contains(body, "Classique à 12 <span class=\"muted\">(50 %)</span>") ||
+		!strings.Contains(body, "Traîtres à 12 <span class=\"muted\">(50 %)</span>") {
+		t.Errorf("12 players: setups that may be drawn not listed:\n%s", body)
 	}
 
 	// Remove then re-add one player.
@@ -162,7 +166,7 @@ func TestAdminGameLifecycle(t *testing.T) {
 	}
 	c.post("/admin/players", url.Values{"names": {"Douzième"}})
 
-	resp, body = c.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}, "setup": {"12-classic"}})
+	resp, body = c.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}})
 	if resp.StatusCode != http.StatusOK || !strings.Contains(body, "Partie en cours") {
 		t.Fatalf("draw: status %d, body:\n%s", resp.StatusCode, body)
 	}
@@ -171,15 +175,26 @@ func TestAdminGameLifecycle(t *testing.T) {
 		t.Fatalf("phase = %s, want running", g.Phase)
 	}
 
-	// The admin may play: the admin page must never reveal roles or signs.
+	// The admin may play: the admin page must never reveal roles, signs, challenges, nor the drawn setup.
+	for _, name := range []string{"Classique à 12", "Traîtres à 12"} {
+		if strings.Contains(body, htmlEscape(name)) {
+			t.Errorf("admin page reveals the setup %q", name)
+		}
+	}
 	for _, p := range g.Players {
 		if !strings.Contains(body, p.Name) {
 			t.Errorf("player %s not listed", p.Name)
 		}
-		for _, secret := range append([]string{p.Character}, p.Signs...) {
+		for _, secret := range []string{p.Character, p.Sign} {
 			if strings.Contains(body, secret) || strings.Contains(body, htmlEscape(secret)) {
 				t.Errorf("admin page reveals %q", secret)
 			}
+		}
+	}
+
+	for _, c := range g.Challenges {
+		if strings.Contains(body, htmlEscape(c.Text)) {
+			t.Errorf("admin page reveals the challenge %q", c.Text)
 		}
 	}
 
@@ -209,7 +224,7 @@ func TestAdminCancelDraw(t *testing.T) {
 	c := newTestClient(t)
 	c.loginAdmin()
 	c.post("/admin/players", url.Values{"names": {guestNames(12)}})
-	c.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}, "setup": {"12-classic"}})
+	c.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}})
 
 	_, body := c.post("/admin/cancel-draw", nil)
 	if g := c.game(); g.Phase != game.PhaseSetup || len(g.Players) != 12 {
@@ -220,17 +235,41 @@ func TestAdminCancelDraw(t *testing.T) {
 	}
 }
 
-func TestAdminDrawRejectsUnknownSetup(t *testing.T) {
+func TestAdminDrawRejectsUnknownThemeOrNoSetup(t *testing.T) {
 	c := newTestClient(t)
 	c.loginAdmin()
 	c.post("/admin/players", url.Values{"names": {guestNames(12)}})
 
-	resp, body := c.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}, "setup": {"nope"}})
+	resp, body := c.post("/admin/draw", url.Values{"theme": {"nope"}})
 	if resp.StatusCode != http.StatusBadRequest || !strings.Contains(body, "Requête invalide") {
-		t.Errorf("unknown setup: status %d", resp.StatusCode)
+		t.Errorf("unknown theme: status %d", resp.StatusCode)
+	}
+
+	for _, s := range c.srv.catalog.Setups {
+		s.Weight = 0
+	}
+	resp, body = c.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}})
+	if resp.StatusCode != http.StatusBadRequest || !strings.Contains(body, "Aucune configuration ne correspond") {
+		t.Errorf("no setup with a weight: status %d", resp.StatusCode)
 	}
 	if c.game().Phase != game.PhaseSetup {
 		t.Error("game left setup phase")
+	}
+}
+
+func TestAdminDrawPicksSetupByWeight(t *testing.T) {
+	drawn := map[string]int{}
+	for seed := range uint64(40) {
+		c := newTestClient(t)
+		c.srv.opts.NewRand = func() *rand.Rand { return rand.New(rand.NewPCG(seed, 0)) }
+		c.srv.catalog.Setups["12-traitors"].Weight = 3
+		c.loginAdmin()
+		c.post("/admin/players", url.Values{"names": {guestNames(12)}})
+		c.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}})
+		drawn[c.game().SetupID]++
+	}
+	if len(drawn) != 2 || drawn["12-traitors"] <= drawn["12-classic"] {
+		t.Errorf("setups drawn = %v, want both, 12-traitors (weight 3) more often than 12-classic (weight 1)", drawn)
 	}
 }
 

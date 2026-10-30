@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math/rand/v2"
 	"path"
 	"sort"
 	"strings"
@@ -94,6 +95,27 @@ func (c *Catalog) SetupsFor(theme *Theme, n int) []*Setup {
 	}
 	sort.Slice(setups, func(i, j int) bool { return setups[i].ID < setups[j].ID })
 	return setups
+}
+
+// PickSetup draws one of the setups for exactly n players that the theme can cast, with a chance
+// proportional to its weight. It returns nil if there is none (or if they all weigh 0).
+func (c *Catalog) PickSetup(theme *Theme, n int, rng *rand.Rand) *Setup {
+	setups := c.SetupsFor(theme, n) // sorted, so the result only depends on the rng
+	total := 0
+	for _, s := range setups {
+		total += s.Weight
+	}
+	if total == 0 {
+		return nil
+	}
+	r := rng.IntN(total)
+	for _, s := range setups {
+		if r < s.Weight {
+			return s
+		}
+		r -= s.Weight
+	}
+	panic("unreachable")
 }
 
 // decodeFile decodes YAML strictly: unknown fields are errors, to catch typos in hand-written files.

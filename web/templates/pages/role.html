@@ -15,23 +15,30 @@
 <section class="card identity team-{{.Color}}">
     <p class="muted">{{tf "role.you_are" .Name}}</p>
     <h2 class="character">{{.Character}}</h2>
-    <p><span class="badge team-{{.Color}}">{{.TeamName}}</span></p>
+    <p><span class="badge team-{{.Color}}">{{.TeamName}}</span>{{with .Traitor}} <span class="badge traitor">{{.Name}}</span>{{end}}</p>
     {{with .Description}}<p>{{.}}</p>{{end}}
     {{with .TeamHelp}}<p class="muted">{{.}}</p>{{end}}
-    {{if eq .Color "white"}}<p class="muted">{{t "role.white_help"}}</p>{{end}}
-    {{if eq .Rule "ally_of_everyone"}}<p class="muted">{{t "role.rules.ally_of_everyone"}}</p>{{end}}
-    {{if eq .Rule "enemy_of_everyone"}}<p class="muted">{{t "role.rules.enemy_of_everyone"}}</p>{{end}}
+    {{with .Traitor}}
+    {{with .Description}}<p>{{.}}</p>{{end}}
+    <p class="muted">{{t "role.traitor_help"}}</p>
+    {{end}}
 </section>
 
 <section class="card">
-    <h2>{{t "role.signs.title"}}</h2>
-    <p class="muted">{{t "role.signs.help"}}</p>
+    <h2>{{t "role.sign.title"}}</h2>
+    <p class="muted">{{t "role.sign.help"}}</p>
+    <p><strong>{{.Sign}}</strong></p>
+</section>
+
+{{if .Challenges}}
+<section class="card" id="challenges">
+    <h2>{{t "role.challenges.title"}}</h2>
+    <p class="muted">{{tf "role.challenges.help" .Points.Challenge}}</p>
     <ul class="signs">
-        {{range .Signs}}
-        <li>{{with .For}}<span class="muted">{{tf "role.signs.for" .}}</span><br>{{end}}<strong>{{.Text}}</strong></li>
-        {{end}}
+        {{range .Challenges}}<li><strong>{{.}}</strong></li>{{end}}
     </ul>
 </section>
+{{end}}
 
 <section class="card">
     <h2>{{t "role.clues.title"}}</h2>
@@ -39,7 +46,7 @@
     <p class="muted">{{t "role.clues.help"}}</p>
     <ul class="signs">
         {{range .Clues}}
-        <li><strong>{{.Character}}</strong> : {{range $i, $sign := .Signs}}{{if $i}} {{t "role.clues.or"}} {{end}}{{$sign}}{{end}}</li>
+        <li><span class="badge team-{{.Color}}">{{.Label}}</span> {{.Sign}}</li>
         {{end}}
     </ul>
     {{else}}
@@ -47,28 +54,11 @@
     {{end}}
 </section>
 
-{{if .Camps}}
-<section class="card" id="camp">
-    <h2>{{t "role.camp.title"}}</h2>
-    <form method="post" action="/me/camp" class="stack">
-        <fieldset class="stack plain"{{if .Closed}} disabled{{end}}>
-            <legend class="muted">{{t "role.camp.help"}}</legend>
-            {{range .Camps}}
-            <label class="radio-row">
-                <input type="radio" name="camp" value="{{.Value}}"{{if eq .Value $.Choice}} checked{{end}}>
-                <span class="badge team-{{.Value}}">{{.Name}}</span>
-            </label>
-            {{end}}
-            <button type="submit">{{t "role.camp.submit"}}</button>
-        </fieldset>
-    </form>
-</section>
-{{end}}
-
 <section class="card" id="guesses">
     <h2>{{t "role.guesses.title"}}</h2>
     {{if .Saved}}<p class="notice" role="status">{{t "role.guesses.saved"}}</p>{{end}}
     <p class="muted">{{t "role.guesses.help"}}</p>
+    {{with .Points}}<p class="muted">{{tf "role.guesses.points" .AllyFound .EnemyFound .Wrong .DesignatedAlly .DesignatedEnemy}}</p>{{end}}
     <form method="post" action="/me/guesses">
         <fieldset class="plain"{{if .Closed}} disabled{{end}}>
             <ul class="rows guesses">

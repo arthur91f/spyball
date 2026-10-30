@@ -24,7 +24,7 @@ func startedGame(t *testing.T) *testClient {
 	admin := newTestClient(t)
 	admin.loginAdmin()
 	admin.post("/admin/players", url.Values{"names": {guestNames(12)}})
-	admin.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}, "setup": {"12-classic"}})
+	admin.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}})
 	if admin.game().Phase != game.PhaseRunning {
 		t.Fatal("game not started")
 	}
@@ -60,7 +60,7 @@ func TestLoginBeforeDraw(t *testing.T) {
 
 func TestPlayerLoginAndRolePage(t *testing.T) {
 	admin := startedGame(t)
-	me := admin.playerBy(func(p *game.Player) bool { return p.Color == config.Blue && len(p.Clues) > 0 })
+	me := admin.playerBy(func(p *game.Player) bool { return p.Color == config.Blue && !p.Traitor })
 	c := admin.newPlayerClient()
 
 	_, body := c.get("/login")
@@ -76,30 +76,42 @@ func TestPlayerLoginAndRolePage(t *testing.T) {
 	if !strings.Contains(body, `<h2 class="character">`+htmlEscape(me.Character)+`</h2>`) {
 		t.Errorf("role page does not show the character %q", me.Character)
 	}
-	if !strings.Contains(body, htmlEscape(me.Signs[0])) {
-		t.Errorf("role page does not show the sign %q", me.Signs[0])
+	if !strings.Contains(body, htmlEscape(me.Sign)) {
+		t.Errorf("role page does not show the sign %q", me.Sign)
+	}
+	if strings.Contains(body, "Agent double") || strings.Contains(body, `id="challenges"`) {
+		t.Error("role page of an ordinary player mentions traitors")
 	}
 
-	// Clues show the clue characters and the signs this player may see, nothing about anyone else.
+	// Clues show the color and sign of the clue players, never other characters (they are passwords)
+	// nor whether they are traitors.
 	g := admin.game()
+	labels := map[config.Color]string{config.Blue: "démocrate", config.Red: "autocrate"}
+	wantBadges := map[config.Color]int{}
+	for _, id := range me.Clues {
+		p, _ := g.Player(id)
+		wantBadges[p.Color]++
+	}
+	for color, label := range labels {
+		if got := strings.Count(body, `<span class="badge team-`+string(color)+`">`+htmlEscape(label)+`</span>`); got != wantBadges[color] {
+			t.Errorf("%d %s clue badges, want %d", got, color, wantBadges[color])
+		}
+	}
 	for _, p := range g.Players {
 		if p.ID == me.ID {
 			continue
 		}
-		isClue := slices.Contains(me.Clues, p.ID)
-		shown := strings.Contains(body, "<strong>"+htmlEscape(p.Character)+"</strong>")
-		if shown != isClue {
-			t.Errorf("character %s shown=%v, is a clue=%v", p.Character, shown, isClue)
+		if strings.Contains(body, htmlEscape(p.Character)) {
+			t.Errorf("character %s shown on the role page of %s", p.Character, me.Character)
 		}
-		for i, sign := range p.Signs {
-			visible := isClue && (p.Color != config.White || p.Color.SignColors()[i] == config.Blue)
-			if got := strings.Contains(body, htmlEscape(sign)); got != visible {
-				t.Errorf("sign %q of %s (%s) shown=%v, want %v", sign, p.Character, p.Color, got, visible)
-			}
+		if got, want := strings.Contains(body, htmlEscape(p.Sign)), slices.Contains(me.Clues, p.ID); got != want {
+			t.Errorf("sign %q of %s shown=%v, want %v", p.Sign, p.Character, got, want)
 		}
 	}
-	if strings.Contains(body, `id="camp"`) {
-		t.Error("camp choice shown to a blue player")
+	for _, c := range g.Challenges {
+		if strings.Contains(body, htmlEscape(c.Text)) {
+			t.Errorf("traitors' challenge %q shown on the role page of %s", c.Text, me.Character)
+		}
 	}
 
 	// Logging in again needs the character.
@@ -170,29 +182,31 @@ func TestPlayerGuesses(t *testing.T) {
 	}
 }
 
-func TestWhiteChoosesCamp(t *testing.T) {
+func TestTraitorSeesChallenges(t *testing.T) {
 	admin := startedGame(t)
-	white := admin.playerBy(func(p *game.Player) bool { return p.Color == config.White })
-	blue := admin.playerBy(func(p *game.Player) bool { return p.Color == config.Blue })
+	g := admin.game()
+	traitor := admin.playerBy(func(p *game.Player) bool { return p.Traitor })
 
 	c := admin.newPlayerClient()
-	_, body := c.loginPlayer(white.Name, "")
-	if !strings.Contains(body, `id="camp"`) || !strings.Contains(body, "Pour te faire reconnaître des Démocraties du monde libre") {
-		t.Fatalf("white role page lacks camp choice or labelled signs:\n%s", body)
+	_, body := c.loginPlayer(traitor.Name, "")
+	if !strings.Contains(body, `<span class="badge traitor">Agent double</span>`) || !strings.Contains(body, `id="challenges"`) {
+		t.Fatalf("traitor role page lacks the traitor badge or the challenges:\n%s", body)
+	}
+	if len(g.Challenges) == 0 {
+		t.Fatal("no challenge drawn")
+	}
+	for _, ch := range g.Challenges {
+		if !strings.Contains(body, "<li><strong>"+htmlEscape(ch.Text)+"</strong></li>") {
+			t.Errorf("traitor role page lacks challenge %q", ch.Text)
+		}
 	}
 
-	_, body = c.post("/me/camp", url.Values{"camp": {"red"}})
-	if got := admin.playerBy(func(p *game.Player) bool { return p.ID == white.ID }).Choice; got != config.CampRed {
-		t.Errorf("choice = %q, want red", got)
+	// Traitors declare nothing: the admin attests the challenges at the end.
+	if strings.Contains(body, `action="/me/challenges`) {
+		t.Error("traitor role page has a declaration form")
 	}
-	if !strings.Contains(body, `value="red" checked`) {
-		t.Error("choice not checked on the page")
-	}
-
-	b := admin.newPlayerClient()
-	b.loginPlayer(blue.Name, "")
-	if resp, _ := b.post("/me/camp", url.Values{"camp": {"red"}}); resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("blue choosing a camp: status %d", resp.StatusCode)
+	if resp, _ := c.post("/me/challenges/0", url.Values{"target": {string(g.Players[0].ID)}}); resp.StatusCode == http.StatusOK {
+		t.Error("declaring a challenge is still possible")
 	}
 }
 

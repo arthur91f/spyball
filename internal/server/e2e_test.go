@@ -12,12 +12,19 @@ import (
 	"testing"
 
 	"github.com/arthur91f/spyball/internal/config"
+	"github.com/arthur91f/spyball/internal/game"
 )
 
 // TestFullGame plays a whole party through HTTP only, like the guests' phones would, and checks the
 // results against an independent computation of the scores. It then restarts the server on the same
 // data and checks that nothing was lost.
 func TestFullGame(t *testing.T) {
+	for _, setup := range []string{"12-classic", "12-traitors"} {
+		t.Run(setup, func(t *testing.T) { playFullGame(t, setup) })
+	}
+}
+
+func playFullGame(t *testing.T, setupID string) {
 	dataDir := t.TempDir()
 	srv := newTestServerAt(t, dataDir)
 	adminTS := httptest.NewServer(srv)
@@ -30,7 +37,13 @@ func TestFullGame(t *testing.T) {
 	admin.loginAdmin()
 	guests := []string{"Rémi", "Zoé", "Anaïs", "Benoît", "Chloé", "Damien", "Élodie", "François", "Gaëlle", "Hugo", "Inès", "Jérôme"}
 	admin.post("/admin/players", url.Values{"names": {strings.Join(guests, "\n")}})
-	_, body := admin.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}, "setup": {"12-classic"}})
+	// The setup is drawn at random by weight: only the one under test can be drawn.
+	for id, s := range srv.catalog.Setups {
+		if id != setupID {
+			s.Weight = 0
+		}
+	}
+	_, body := admin.post("/admin/draw", url.Values{"theme": {"ball-of-nations"}})
 	if !strings.Contains(body, "Partie en cours") {
 		t.Fatalf("draw failed:\n%s", body)
 	}
@@ -40,6 +53,7 @@ func TestFullGame(t *testing.T) {
 		name      string
 		character string
 		client    *testClient
+		rolePage  string
 		guessIDs  map[string]string // guess field player ID -> guest name
 	}
 	byName := map[string]*guest{}
@@ -59,6 +73,7 @@ func TestFullGame(t *testing.T) {
 			t.Fatalf("%s: no character on the role page:\n%s", name, body)
 		}
 		g.character = html.UnescapeString(m[1])
+		g.rolePage = body
 		for _, m := range guessRe.FindAllStringSubmatch(body, -1) {
 			g.guessIDs[m[2]] = html.UnescapeString(m[1])
 		}
@@ -69,6 +84,15 @@ func TestFullGame(t *testing.T) {
 		all = append(all, g)
 	}
 
+	// A role page shows no other character, not even in the clues: characters are passwords.
+	for _, g := range all {
+		for _, other := range all {
+			if other != g && strings.Contains(g.rolePage, htmlEscape(other.character)) {
+				t.Errorf("role page of %s reveals %s", g.name, other.character)
+			}
+		}
+	}
+
 	// The admin page never leaks roles, even with everyone logged in.
 	_, body = admin.get("/admin")
 	for _, g := range all {
@@ -77,41 +101,32 @@ func TestFullGame(t *testing.T) {
 		}
 	}
 
-	// Where each character belongs, from the theme: the oracle the results are checked against.
-	colorOf, ruleOf := map[string]config.Color{}, map[string]config.Rule{}
+	// Where each character belongs, from the theme, and who the traitors are, from their role page:
+	// the oracle the results are checked against.
+	colorOf := map[string]config.Color{}
 	for color, chars := range theme.Characters {
 		for _, c := range chars {
-			colorOf[c.Name], ruleOf[c.Name] = color, c.Rule
+			colorOf[c.Name] = color
 		}
 	}
-	campOf := map[string]config.Camp{}
-	whiteChoices := []config.Camp{config.CampRed, config.CampNeutral}
+	isTraitor := map[string]bool{}
+	traitorsByColor := map[config.Color]int{}
 	for _, g := range all {
-		switch colorOf[g.character] {
-		case config.Blue:
-			campOf[g.name] = config.CampBlue
-		case config.Red:
-			campOf[g.name] = config.CampRed
-		case config.White:
-			campOf[g.name] = whiteChoices[0]
-			whiteChoices = whiteChoices[1:]
-			g.client.post("/me/camp", url.Values{"camp": {string(campOf[g.name])}})
-		default:
-			campOf[g.name] = config.CampNeutral
+		if strings.Contains(g.rolePage, `<span class="badge traitor">`) {
+			isTraitor[g.name] = true
+			traitorsByColor[colorOf[g.character]]++
 		}
 	}
-	isAlly := func(a, b *guest) bool {
-		ra, rb := ruleOf[a.character], ruleOf[b.character]
-		switch {
-		case ra == config.AllyOfEveryone || rb == config.AllyOfEveryone:
-			return true
-		case ra == config.EnemyOfEveryone || rb == config.EnemyOfEveryone:
-			return false
+	setup := admin.srv.catalog.Setups[setupID]
+	for _, color := range config.Colors {
+		if traitorsByColor[color] != setup.CountTraitors(color) {
+			t.Fatalf("%d %s traitors, want %d", traitorsByColor[color], color, setup.CountTraitors(color))
 		}
-		return campOf[a.name] == campOf[b.name]
 	}
 
 	// Everyone guesses about everyone: right for the first five, wrong for the next three, no answer otherwise.
+	// A right guess earns 2 points. Right or wrong, the player it is about earns 1 if designated as an ally
+	// and loses 2 if designated as an enemy.
 	want := map[string]int{}
 	for _, g := range all {
 		form := url.Values{}
@@ -119,24 +134,52 @@ func TestFullGame(t *testing.T) {
 		for id, otherName := range g.guessIDs {
 			other := byName[otherName]
 			truth := "enemy"
-			if isAlly(g, other) {
+			if colorOf[g.character] == colorOf[other.character] {
 				truth = "ally"
 			}
 			opposite := map[string]string{"ally": "enemy", "enemy": "ally"}[truth]
+			guess := ""
 			switch {
 			case n < 5:
-				form.Set("guess_"+id, truth)
-				want[g.name]++
+				guess = truth
+				want[g.name] += 2
 			case n < 8:
-				form.Set("guess_"+id, opposite)
-				want[g.name]--
-			default:
-				form.Set("guess_"+id, "")
+				guess = opposite
 			}
+			switch guess {
+			case "ally":
+				want[other.name]++
+			case "enemy":
+				want[other.name] -= 2
+			}
+			form.Set("guess_"+id, guess)
 			n++
 		}
 		if resp, _ := g.client.post("/me/guesses", form); resp.StatusCode != http.StatusOK {
 			t.Fatalf("%s: saving guesses: status %d", g.name, resp.StatusCode)
+		}
+	}
+
+	// Every traitor sees the same challenges, and nobody else sees them. Traitors declare nothing.
+	challengesRe := regexp.MustCompile(`(?s)<section class="card" id="challenges">.*?</section>`)
+	var traitors []*guest
+	for _, g := range all {
+		challenges := challengesRe.FindString(g.rolePage)
+		if !isTraitor[g.name] {
+			if challenges != "" {
+				t.Fatalf("%s is not a traitor but has challenges", g.name)
+			}
+			continue
+		}
+		traitors = append(traitors, g)
+		if n := strings.Count(challenges, "<li>"); n != setup.Challenges {
+			t.Fatalf("traitor %s has %d challenges, want %d", g.name, n, setup.Challenges)
+		}
+		if want := challengesRe.FindString(traitors[0].rolePage); challenges != want {
+			t.Errorf("challenges of %s differ from those of %s:\n%s\n%s", g.name, traitors[0].name, challenges, want)
+		}
+		if strings.Contains(g.rolePage, `action="/me/challenges`) {
+			t.Errorf("traitor %s can declare challenges", g.name)
 		}
 	}
 
@@ -154,27 +197,49 @@ func TestFullGame(t *testing.T) {
 		t.Errorf("guesses accepted after close: status %d", resp.StatusCode)
 	}
 
-	// A successful challenge, then the results.
-	var challenger *guest
-	for _, g := range all {
-		if colorOf[g.character] == config.Yellow {
-			challenger = g
-			break
-		}
-	}
+	// On the admin page, the organizer checks the challenges done (all but the first one), without saying by whom:
+	// they score for the traitors' camp. Then they penalize a public denunciation.
 	_, resultsPage := admin.get("/results")
-	optionRe := regexp.MustCompile(`<option value="(p\d+)">` + regexp.QuoteMeta(htmlEscape(challenger.name)) + `</option>`)
-	m := optionRe.FindStringSubmatch(resultsPage)
-	if m == nil {
-		t.Fatalf("no option for %s in the points form", challenger.name)
+	idOf := func(name string) string {
+		m := regexp.MustCompile(`<option value="(p\d+)">` + regexp.QuoteMeta(htmlEscape(name)) + `</option>`).FindStringSubmatch(resultsPage)
+		if m == nil {
+			t.Fatalf("no option for %s in the points form", name)
+		}
+		return m[1]
 	}
-	admin.post("/results/points", url.Values{"player": {m[1]}, "points": {"2"}, "reason": {"Défi réussi"}})
-	want[challenger.name] += 2
+	_, adminPage := admin.get("/admin")
+	if n := strings.Count(adminPage, `type="checkbox" name="done"`); n != setup.Challenges {
+		t.Errorf("%d challenges to check, want %d", n, setup.Challenges)
+	}
+	done := url.Values{}
+	for i := 1; i < setup.Challenges; i++ {
+		done.Add("done", strconv.Itoa(i))
+	}
+	if resp, _ := admin.post("/admin/challenges", done); resp.StatusCode != http.StatusOK {
+		t.Fatalf("checking the challenges done: status %d", resp.StatusCode)
+	}
+	challengesDone := setup.Challenges - 1
+
+	admin.post("/results/points", url.Values{"player": {idOf("Zoé")}, "points": {"-1"}, "reason": {"Dénoncée publiquement"}})
+	want["Zoé"]--
 
 	visitor := admin.newPlayerClient()
 	_, resultsPage = visitor.get("/results")
+	if want := htmlEscape("Configuration tirée au sort : " + setup.Name); !strings.Contains(resultsPage, want) {
+		t.Errorf("results page does not name the drawn setup %q", setup.Name)
+	}
+	section := func(title string) string {
+		_, after, ok := strings.Cut(resultsPage, "<h2>"+title+"</h2>")
+		if !ok {
+			t.Fatalf("results page has no %q section", title)
+		}
+		before, _, _ := strings.Cut(after, "</section>")
+		return before
+	}
+
+	// Every player, traitors included, with their character and score.
 	rowRe := regexp.MustCompile(`<strong>([^<]+)</strong> · ([^<]+)<br>[\s\S]*?<span class="score">(-?\d+)</span>`)
-	rows := rowRe.FindAllStringSubmatch(resultsPage, -1)
+	rows := rowRe.FindAllStringSubmatch(section("Classement des joueurs"), -1)
 	if len(rows) != len(guests) {
 		t.Fatalf("%d players in the results, want %d", len(rows), len(guests))
 	}
@@ -187,6 +252,33 @@ func TestFullGame(t *testing.T) {
 		if total != want[name] {
 			t.Errorf("results: %s scored %d, want %d", name, total, want[name])
 		}
+	}
+
+	// A color camp scores the sum of its members who are not traitors; the traitors' camp scores the sum of
+	// the traitors, plus the challenges done.
+	teams := section("Classement des camps")
+	for _, color := range config.Colors {
+		sum := 0
+		for _, g := range all {
+			if colorOf[g.character] == color && !isTraitor[g.name] {
+				sum += want[g.name]
+			}
+		}
+		wantTeam := `<span class="badge team-` + string(color) + `">` + htmlEscape(theme.Teams[color].Name) + `</span>
+            <span class="score">` + strconv.Itoa(sum) + `&nbsp;pts</span>`
+		if !strings.Contains(teams, wantTeam) {
+			t.Errorf("team %s: score %d not shown in:\n%s", color, sum, teams)
+		}
+	}
+	sum := challengesDone * game.PointsChallenge
+	for _, g := range traitors {
+		sum += want[g.name]
+	}
+	wantTeam := `<span class="badge team-traitors">` + htmlEscape(theme.Traitor.Team) + `</span>
+            <span class="score">` + strconv.Itoa(sum) + `&nbsp;pts</span>
+            <small class="muted">` + strconv.Itoa(len(traitors)) + ` traîtres, ` + strconv.Itoa(challengesDone) + ` défi(s) réalisé(s)</small>`
+	if !strings.Contains(teams, wantTeam) {
+		t.Errorf("traitors' camp: score %d not shown in:\n%s", sum, teams)
 	}
 
 	// The server restarts (power cut, laptop closed…): same results, sessions still valid.

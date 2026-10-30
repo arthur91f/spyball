@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -27,6 +28,7 @@ func (s *Server) registerAdmin(mux *http.ServeMux) {
 	mux.Handle("POST /admin/draw", s.requireAdmin(s.handleDraw))
 	mux.Handle("POST /admin/cancel-draw", s.requireAdmin(s.handleCancelDraw))
 	mux.Handle("POST /admin/close", s.requireAdmin(s.handleClose))
+	mux.Handle("POST /admin/challenges", s.requireAdmin(s.handleChallengesDone))
 	mux.Handle("POST /admin/reset", s.requireAdmin(s.handleReset))
 }
 
@@ -91,12 +93,23 @@ type adminPage struct {
 	// Setup phase: what can be drawn.
 	Themes        []*config.Theme
 	SelectedTheme string
-	Setups        []*config.Setup // setups for exactly len(Players) players
+	Setups        []setupChance   // setups that may be drawn for exactly len(Players) players
 	AllSetups     []*config.Setup // every setup, by player count, as a hint
 
-	// Running and closed phases.
+	// Running and closed phases. The drawn setup is only named once the game is closed:
+	// it tells how many traitors there are.
 	ThemeName string
 	SetupName string
+
+	// Closed phase: the traitors' challenges, for the admin to tell which ones were done.
+	Challenges      []challengeResult
+	PointsChallenge int
+}
+
+// setupChance is a setup that may be drawn, with its chance in percent.
+type setupChance struct {
+	Name    string
+	Percent int
 }
 
 type adminPlayer struct {
@@ -116,9 +129,14 @@ func (s *Server) adminPage(errMsg, namesInput string) adminPage {
 		if t := s.catalog.Themes[g.ThemeID]; t != nil {
 			page.ThemeName = t.Name
 		}
+		if g.Phase != game.PhaseClosed {
+			return nil
+		}
 		if st := s.catalog.Setups[g.SetupID]; st != nil {
 			page.SetupName = st.Name
 		}
+		page.Challenges = challengeResults(g)
+		page.PointsChallenge = game.PointsChallenge
 		return nil
 	})
 
@@ -130,17 +148,24 @@ func (s *Server) adminPage(errMsg, namesInput string) adminPage {
 		page.SelectedTheme = page.Themes[0].ID
 	}
 
+	var candidates []*config.Setup
+	total := 0
 	for _, st := range s.catalog.Setups {
 		page.AllSetups = append(page.AllSetups, st)
-		if st.PlayerCount() == len(page.Players) {
-			page.Setups = append(page.Setups, st)
+		if st.PlayerCount() == len(page.Players) && st.Weight > 0 {
+			candidates = append(candidates, st)
+			total += st.Weight
 		}
 	}
-	bySize := func(a, b *config.Setup) int {
+	slices.SortFunc(page.AllSetups, func(a, b *config.Setup) int {
 		return cmp.Or(cmp.Compare(a.PlayerCount(), b.PlayerCount()), cmp.Compare(a.Name, b.Name))
+	})
+	slices.SortFunc(candidates, func(a, b *config.Setup) int {
+		return cmp.Or(cmp.Compare(b.Weight, a.Weight), cmp.Compare(a.Name, b.Name))
+	})
+	for _, st := range candidates {
+		page.Setups = append(page.Setups, setupChance{Name: st.Name, Percent: (100*st.Weight + total/2) / total})
 	}
-	slices.SortFunc(page.AllSetups, bySize)
-	slices.SortFunc(page.Setups, bySize)
 	return page
 }
 
@@ -195,14 +220,20 @@ func (s *Server) handleResetLogin(w http.ResponseWriter, r *http.Request) {
 	s.adminUpdate(w, r, func(g *game.Game) error { return g.ResetLogin(id) })
 }
 
+// handleDraw draws the roles of a setup itself drawn at random, weighted, among the setups for this number
+// of players that the chosen theme can cast.
 func (s *Server) handleDraw(w http.ResponseWriter, r *http.Request) {
 	theme := s.catalog.Themes[r.PostFormValue("theme")]
-	setup := s.catalog.Setups[r.PostFormValue("setup")]
+	rng := s.opts.NewRand()
 	s.adminUpdate(w, r, func(g *game.Game) error {
-		if theme == nil || setup == nil {
+		if theme == nil {
 			return game.ErrInvalid
 		}
-		return g.Draw(theme, setup, s.opts.NewRand())
+		setup := s.catalog.PickSetup(theme, len(g.Players), rng)
+		if setup == nil {
+			return fmt.Errorf("%w: %d players, theme %s", game.ErrNoSetup, len(g.Players), theme.ID)
+		}
+		return g.Draw(theme, setup, rng)
 	})
 }
 

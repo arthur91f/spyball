@@ -1,6 +1,8 @@
 package config
 
 import (
+	"math/rand/v2"
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -26,24 +28,30 @@ func TestLoadEmbeddedContent(t *testing.T) {
 	if got := setup.PlayerCount(); got != 12 {
 		t.Errorf("PlayerCount = %d, want 12", got)
 	}
-	for color, want := range map[Color]int{Blue: 4, Red: 4, White: 2, Yellow: 2} {
-		if got := setup.CountColor(color); got != want {
-			t.Errorf("CountColor(%s) = %d, want %d", color, got, want)
+	for _, color := range Colors {
+		if got := setup.CountColor(color); got != 6 {
+			t.Errorf("CountColor(%s) = %d, want 6", color, got)
 		}
+		if got := setup.CountTraitors(color); got != 1 {
+			t.Errorf("CountTraitors(%s) = %d, want 1", color, got)
+		}
+	}
+	if setup.Challenges < 1 {
+		t.Errorf("Challenges = %d, want at least 1", setup.Challenges)
 	}
 
 	cast, err := theme.Cast(setup)
 	if err != nil {
 		t.Fatalf("Cast: %v", err)
 	}
-	for slot, want := range map[SlotID]string{"blue-1": "USA", "red-1": "Russie", "white-2": "Brésil", "yellow-1": "ONG P.L.S.", "yellow-2": "Anonymous"} {
+	for slot, want := range map[SlotID]string{"blue-1": "USA", "red-1": "Russie", "red-6": "Cuba"} {
 		if got := cast[slot].Name; got != want {
 			t.Errorf("cast[%s] = %q, want %q", slot, got, want)
 		}
 	}
 
-	if !containsString(theme.Signs[Yellow], "faire chanter un autocrate") {
-		t.Errorf("yellow signs not expanded: %q", theme.Signs[Yellow])
+	if len(theme.Challenges) < setup.Challenges {
+		t.Errorf("%d challenges, setup needs %d", len(theme.Challenges), setup.Challenges)
 	}
 
 	if got := cat.SetupsFor(theme, 12); len(got) != 1 || got[0].ID != "12-classic" {
@@ -70,24 +78,25 @@ name: Test
 teams:
   blue: {name: Bleus, member: bleu}
   red: {name: Rouges, member: rouge}
-  neutral: {name: Neutres, member: neutre}
+traitor: {name: Traître, team: Traîtres}
 characters:
   blue: [{name: B1}, {name: B2}, {name: B3}]
   red: [{name: R1}, {name: R2}, {name: R3}]
-  yellow: [{name: Ally, rule: ally_of_everyone}]
 signs:
   blue: [b1, b2, b3]
   red: [r1, r2, r3]
-  yellow: ["faire rire un {red}"]
+challenges: ["faire rire un {red}", "faire chanter un {blue}"]
 `
 
 const validSetup = `
 name: Six
+weight: 1
+challenges: 1
 slots:
-  blue-1: {clues: [blue-2]}
+  blue-1: {traitor: true, clues: [blue-2]}
   blue-2: {clues: [blue-1]}
   blue-3: {}
-  red-1: {}
+  red-1: {traitor: true}
   red-2: {}
   red-3: {}
 `
@@ -116,22 +125,28 @@ func TestLoadRejectsInvalidSetups(t *testing.T) {
 	if err := loadWith(t, nil); err != nil {
 		t.Fatalf("valid fixture: %v", err)
 	}
+	// Teams of different sizes, traitors in one team only: accepted.
+	uneven := "name: x\nweight: 0\nchallenges: 1\nslots: {blue-1: {traitor: true}, blue-2: {traitor: true}, blue-3: {}, blue-4: {}, red-1: {}, red-2: {}, red-3: {}}"
+	if err := loadWith(t, map[string]string{"setups/seven.yaml": uneven}); err != nil {
+		t.Errorf("uneven setup: %v", err)
+	}
 
 	tests := []struct {
 		name    string
 		setup   string
 		wantErr string
 	}{
-		{"unequal teams", "name: x\nslots: {blue-1: {}, blue-2: {}, blue-3: {}, red-1: {}, red-2: {}, white-1: {}}", "3 blue slots but 2 red"},
-		{"too few players", "name: x\nslots: {blue-1: {}, red-1: {}}", "want between 6 and 24"},
-		{"numbering gap", "name: x\nslots: {blue-1: {}, blue-3: {}, red-1: {}, red-2: {}, white-1: {}, white-2: {}}", "numbered 1 to n"},
-		{"bad slot id", "name: x\nslots: {green-1: {}}", `unknown color "green"`},
-		{"yellow without rule", "name: x\nslots: {blue-1: {}, blue-2: {}, red-1: {}, red-2: {}, white-1: {}, yellow-1: {}}", "yellow slots need a rule"},
-		{"rule on blue", "name: x\nslots: {blue-1: {rule: ally_of_everyone}, blue-2: {}, red-1: {}, red-2: {}, white-1: {}, white-2: {}}", "only yellow slots"},
-		{"unknown clue", "name: x\nslots: {blue-1: {clues: [red-9]}, blue-2: {}, red-1: {}, red-2: {}, white-1: {}, white-2: {}}", "unknown slot red-9"},
-		{"self clue", "name: x\nslots: {blue-1: {clues: [blue-1]}, blue-2: {}, red-1: {}, red-2: {}, white-1: {}, white-2: {}}", "clue about itself"},
-		{"typo in field", "name: x\nslots: {blue-1: {clue: [blue-2]}}", "field clue not found"},
-		{"missing name", "slots: {blue-1: {}, blue-2: {}, blue-3: {}, red-1: {}, red-2: {}, red-3: {}}", "missing name"},
+		{"too few players", "name: x\nweight: 1\nslots: {blue-1: {}, red-1: {}}", "want between 6 and 24"},
+		{"numbering gap", "name: x\nweight: 1\nslots: {blue-1: {}, blue-2: {}, blue-4: {}, red-1: {}, red-2: {}, red-3: {}}", "numbered 1 to n"},
+		{"bad slot id", "name: x\nweight: 1\nslots: {white-1: {}}", `unknown color "white"`},
+		{"traitors without challenges", "name: x\nweight: 1\nslots: {blue-1: {traitor: true}, blue-2: {}, blue-3: {}, red-1: {traitor: true}, red-2: {}, red-3: {}}", "missing number of challenges"},
+		{"challenges without traitors", "name: x\nweight: 1\nchallenges: 2\nslots: {blue-1: {}, blue-2: {}, blue-3: {}, red-1: {}, red-2: {}, red-3: {}}", "there is no traitor"},
+		{"unknown clue", "name: x\nweight: 1\nslots: {blue-1: {clues: [red-9]}, blue-2: {}, blue-3: {}, red-1: {}, red-2: {}, red-3: {}}", "unknown slot red-9"},
+		{"self clue", "name: x\nweight: 1\nslots: {blue-1: {clues: [blue-1]}, blue-2: {}, blue-3: {}, red-1: {}, red-2: {}, red-3: {}}", "clue about itself"},
+		{"missing weight", "name: x\nslots: {blue-1: {}, blue-2: {}, blue-3: {}, red-1: {}, red-2: {}, red-3: {}}", "missing weight"},
+		{"negative weight", "name: x\nweight: -1\nslots: {blue-1: {}, blue-2: {}, blue-3: {}, red-1: {}, red-2: {}, red-3: {}}", "want 0 or more"},
+		{"typo in field", "name: x\nweight: 1\nslots: {blue-1: {clue: [blue-2]}}", "field clue not found"},
+		{"missing name", "weight: 1\nslots: {blue-1: {}, blue-2: {}, blue-3: {}, red-1: {}, red-2: {}, red-3: {}}", "missing name"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -153,13 +168,22 @@ func TestLoadRejectsInvalidThemes(t *testing.T) {
 		{"duplicate once normalized", func(s string) string { return strings.Replace(s, "name: B2", "name: \"b.1\"", 1) }, "duplicate character name"},
 		{"unknown placeholder", func(s string) string { return strings.Replace(s, "{red}", "{green}", 1) }, "unknown placeholder {green}"},
 		{"missing team", func(s string) string {
-			return strings.Replace(s, "  neutral: {name: Neutres, member: neutre}\n", "", 1)
-		}, "teams.neutral"},
-		{"yellow without rule", func(s string) string { return strings.Replace(s, ", rule: ally_of_everyone", "", 1) }, "yellow characters need a rule"},
+			return strings.Replace(s, "  red: {name: Rouges, member: rouge}\n", "", 1)
+		}, "teams.red"},
+		{"unknown team", func(s string) string {
+			return strings.Replace(s, "teams:\n", "teams:\n  neutral: {name: Neutres, member: neutre}\n", 1)
+		}, `teams: unknown color "neutral"`},
+		{"missing traitor", func(s string) string {
+			return strings.Replace(s, "traitor: {name: Traître, team: Traîtres}\n", "", 1)
+		}, "traitor: name and team"},
+		{"missing traitor team", func(s string) string { return strings.Replace(s, ", team: Traîtres", "", 1) }, "traitor: name and team"},
+		{"white characters", func(s string) string {
+			return strings.Replace(s, "  red: [{name: R1}", "  white: [{name: W1}]\n  red: [{name: R1}", 1)
+		}, `characters: unknown color "white"`},
 		{"duplicate sign", func(s string) string { return strings.Replace(s, "r1, r2", "r1, r1", 1) }, "duplicate sign"},
-		{"white sign list", func(s string) string {
-			return strings.Replace(s, "  yellow: [\"faire", "  white: [w1]\n  yellow: [\"faire", 1)
-		}, "signs.white"},
+		{"duplicate challenge", func(s string) string {
+			return strings.Replace(s, `"faire chanter un {blue}"`, `"faire rire un rouge"`, 1)
+		}, "duplicate challenge"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -173,39 +197,72 @@ func TestLoadRejectsInvalidThemes(t *testing.T) {
 
 func TestCast(t *testing.T) {
 	theme, err := newTheme("test", themeFile{
-		Name: "t",
-		Teams: map[Camp]Team{
-			CampBlue: {Name: "b", Member: "b"}, CampRed: {Name: "r", Member: "r"}, CampNeutral: {Name: "n", Member: "n"},
-		},
-		Characters: map[Color][]Character{
-			Blue:   {{Name: "B1"}},
-			Red:    {{Name: "R1"}},
-			Yellow: {{Name: "Y1", Rule: AllyOfEveryone}},
-		},
-		Signs: map[Color][]string{Blue: {"b"}, Red: {"r"}, Yellow: {"y"}},
+		Name:       "t",
+		Teams:      map[Color]Team{Blue: {Name: "b", Member: "b"}, Red: {Name: "r", Member: "r"}},
+		Traitor:    Role{Name: "t", Team: "ts"},
+		Characters: map[Color][]Character{Blue: {{Name: "B1"}}, Red: {{Name: "R1"}, {Name: "R2"}}},
+		Signs:      map[Color][]string{Blue: {"b"}, Red: {"r1", "r2"}},
+		Challenges: []string{"c1"},
 	})
 	if err != nil {
 		t.Fatalf("newTheme: %v", err)
 	}
 
-	setup := &Setup{ID: "s", Slots: []Slot{
-		{ID: "blue-1", Color: Blue, Number: 1},
+	setup := &Setup{ID: "s", Challenges: 2, Slots: []Slot{
+		{ID: "blue-1", Color: Blue, Number: 1, Traitor: true},
 		{ID: "blue-2", Color: Blue, Number: 2},
-		{ID: "red-1", Color: Red, Number: 1},
-		{ID: "white-1", Color: White, Number: 1},
-		{ID: "yellow-1", Color: Yellow, Number: 1, Rule: EnemyOfEveryone},
+		{ID: "red-1", Color: Red, Number: 1, Traitor: true},
+		{ID: "red-2", Color: Red, Number: 2},
 	}}
 	_, err = theme.Cast(setup)
 	for _, want := range []string{
 		"only 1 blue characters",
-		"only 0 white characters",
-		"no more yellow character with rule enemy_of_everyone",
-		"1 blue signs, setup s needs 3", // 2 blue slots + 1 white slot
-		"1 red signs, setup s needs 2",  // 1 red slot + 1 white slot
+		"1 blue signs, setup s needs 2",
+		"1 challenges, setup s needs 2", // every traitor gets the same 2 challenges
 	} {
 		if err == nil || !strings.Contains(err.Error(), want) {
 			t.Errorf("Cast err = %v, want containing %q", err, want)
 		}
+	}
+}
+
+func TestPickSetup(t *testing.T) {
+	theme, err := newTheme("test", themeFile{
+		Name:       "t",
+		Teams:      map[Color]Team{Blue: {Name: "b", Member: "b"}, Red: {Name: "r", Member: "r"}},
+		Traitor:    Role{Name: "t", Team: "ts"},
+		Characters: map[Color][]Character{Blue: {{Name: "B1"}, {Name: "B2"}}, Red: {{Name: "R1"}}},
+		Signs:      map[Color][]string{Blue: {"b1", "b2"}, Red: {"r1"}},
+	})
+	if err != nil {
+		t.Fatalf("newTheme: %v", err)
+	}
+	slots := []Slot{{ID: "blue-1", Color: Blue, Number: 1}, {ID: "red-1", Color: Red, Number: 1}}
+	cat := &Catalog{Setups: map[string]*Setup{
+		"often":      {ID: "often", Weight: 3, Slots: slots},
+		"rarely":     {ID: "rarely", Weight: 1, Slots: slots},
+		"never":      {ID: "never", Weight: 0, Slots: slots},
+		"three":      {ID: "three", Weight: 5, Slots: append(slices.Clone(slots), Slot{ID: "blue-2", Color: Blue, Number: 2})},
+		"uncastable": {ID: "uncastable", Weight: 5, Slots: append(slices.Clone(slots), Slot{ID: "red-2", Color: Red, Number: 2})},
+	}}
+
+	rng := rand.New(rand.NewPCG(1, 2))
+	counts := map[string]int{}
+	for range 4000 {
+		counts[cat.PickSetup(theme, 2, rng).ID]++
+	}
+	if len(counts) != 2 || counts["often"] < 2800 || counts["often"] > 3200 {
+		t.Errorf("draws for 2 players = %v, want about 3000 often and 1000 rarely", counts)
+	}
+	if got := cat.PickSetup(theme, 3, rng); got == nil || got.ID != "three" {
+		t.Errorf("PickSetup(3) = %v, want three (the uncastable one is skipped)", got)
+	}
+	if got := cat.PickSetup(theme, 4, rng); got != nil {
+		t.Errorf("PickSetup(4) = %v, want nil", got.ID)
+	}
+	cat.Setups["often"].Weight, cat.Setups["rarely"].Weight = 0, 0
+	if got := cat.PickSetup(theme, 2, rng); got != nil {
+		t.Errorf("PickSetup with zero weights = %v, want nil", got.ID)
 	}
 }
 

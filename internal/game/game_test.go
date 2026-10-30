@@ -2,6 +2,7 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	"math/rand/v2"
 	"slices"
 	"strconv"
@@ -135,38 +136,6 @@ func TestSetGuess(t *testing.T) {
 	}
 }
 
-func TestChooseCamp(t *testing.T) {
-	g := drawnGame(t, 1)
-	var white, blue *Player
-	for _, p := range g.Players {
-		switch p.Color {
-		case config.White:
-			white = p
-		case config.Blue:
-			blue = p
-		}
-	}
-
-	if white.Camp() != config.CampNeutral {
-		t.Errorf("white without choice: camp = %s, want neutral", white.Camp())
-	}
-	if err := g.ChooseCamp(white.ID, config.CampRed); err != nil {
-		t.Fatalf("ChooseCamp: %v", err)
-	}
-	if err := g.ChooseCamp(white.ID, config.CampBlue); err != nil {
-		t.Fatalf("ChooseCamp again: %v", err)
-	}
-	if white.Camp() != config.CampBlue {
-		t.Errorf("camp = %s, want blue", white.Camp())
-	}
-	if err := g.ChooseCamp(blue.ID, config.CampRed); err == nil {
-		t.Error("blue player choosing a camp: want error")
-	}
-	if err := g.ChooseCamp(white.ID, "green"); err == nil {
-		t.Error("unknown camp: want error")
-	}
-}
-
 func TestDraw(t *testing.T) {
 	theme, setup := loadContent(t)
 	g := drawnGame(t, 42)
@@ -184,26 +153,36 @@ func TestDraw(t *testing.T) {
 		slots[p.Slot] = p
 
 		slot, ok := setup.Slot(p.Slot)
-		if !ok || slot.Color != p.Color || slot.Rule != p.Rule {
-			t.Errorf("player %s: slot %s does not match color %s / rule %s", p.Name, p.Slot, p.Color, p.Rule)
+		if !ok || slot.Color != p.Color || slot.Traitor != p.Traitor {
+			t.Errorf("player %s: slot %s does not match color %s / traitor %v", p.Name, p.Slot, p.Color, p.Traitor)
 		}
 		if p.Character == "" {
 			t.Errorf("player %s: no character", p.Name)
 		}
 
-		wantColors := p.Color.SignColors()
-		if len(p.Signs) != len(wantColors) {
-			t.Fatalf("player %s (%s): %d signs, want %d", p.Name, p.Color, len(p.Signs), len(wantColors))
+		if !slices.Contains(theme.Signs[p.Color], p.Sign) {
+			t.Errorf("player %s: sign %q is not a %s sign", p.Name, p.Sign, p.Color)
 		}
-		for i, sign := range p.Signs {
-			if !slices.Contains(theme.Signs[wantColors[i]], sign) {
-				t.Errorf("player %s: sign %q is not a %s sign", p.Name, sign, wantColors[i])
-			}
-			if signs[sign] {
-				t.Errorf("sign %q drawn twice", sign)
-			}
-			signs[sign] = true
+		if signs[p.Sign] {
+			t.Errorf("sign %q drawn twice", p.Sign)
 		}
+		signs[p.Sign] = true
+
+	}
+
+	// The challenges are drawn once for the game: every traitor shares them.
+	if len(g.Challenges) != setup.Challenges {
+		t.Errorf("%d challenges, want %d", len(g.Challenges), setup.Challenges)
+	}
+	var texts []string
+	for _, c := range g.Challenges {
+		if !slices.Contains(theme.Challenges, c.Text) || c.Done {
+			t.Errorf("unexpected challenge %+v", c)
+		}
+		if slices.Contains(texts, c.Text) {
+			t.Errorf("challenge %q drawn twice", c.Text)
+		}
+		texts = append(texts, c.Text)
 	}
 	if len(slots) != setup.PlayerCount() {
 		t.Errorf("%d slots assigned, want %d", len(slots), setup.PlayerCount())
@@ -220,8 +199,8 @@ func TestDraw(t *testing.T) {
 			t.Errorf("slot %s: clues %v, want %v", slot.ID, got, slot.Clues)
 		}
 	}
-	if slots["blue-1"].Character != "USA" || slots["yellow-2"].Character != "Anonymous" {
-		t.Errorf("characters not cast by slot: blue-1 %q, yellow-2 %q", slots["blue-1"].Character, slots["yellow-2"].Character)
+	if slots["blue-1"].Character != "USA" || slots["red-6"].Character != "Cuba" {
+		t.Errorf("characters not cast by slot: blue-1 %q, red-6 %q", slots["blue-1"].Character, slots["red-6"].Character)
 	}
 }
 
@@ -229,7 +208,7 @@ func TestDrawIsRandomButReproducible(t *testing.T) {
 	assignment := func(g *Game) []string {
 		var s []string
 		for _, p := range g.Players {
-			s = append(s, string(p.Slot)+":"+strings.Join(p.Signs, "|"))
+			s = append(s, string(p.Slot)+":"+p.Sign+fmt.Sprint(g.Challenges))
 		}
 		return s
 	}
@@ -238,6 +217,45 @@ func TestDrawIsRandomButReproducible(t *testing.T) {
 	}
 	if slices.Equal(assignment(drawnGame(t, 7)), assignment(drawnGame(t, 8))) {
 		t.Error("different seeds gave the same draw")
+	}
+}
+
+func TestSetChallengesDone(t *testing.T) {
+	g := handGame(
+		&Player{ID: "t1", Color: config.Blue, Traitor: true},
+		&Player{ID: "t2", Color: config.Red, Traitor: true},
+		&Player{ID: "b", Color: config.Blue},
+	)
+	g.Challenges = []Challenge{{Text: "c1"}, {Text: "c2"}, {Text: "c3"}}
+
+	if err := g.SetChallengesDone([]bool{true, false, false}); !errors.Is(err, ErrWrongPhase) {
+		t.Errorf("while running: err = %v, want ErrWrongPhase", err)
+	}
+	_ = g.Close()
+	if err := g.SetChallengesDone([]bool{true}); !errors.Is(err, ErrInvalid) {
+		t.Errorf("wrong number of answers: err = %v, want ErrInvalid", err)
+	}
+
+	if err := g.SetChallengesDone([]bool{true, false, true}); err != nil {
+		t.Fatal(err)
+	}
+	if got := g.ChallengesDone(); got != 2 {
+		t.Errorf("ChallengesDone = %d, want 2", got)
+	}
+	// The challenges done score for the traitors' camp, not for any traitor.
+	res := g.Score()
+	for _, s := range res.Players {
+		if s.Total != 0 {
+			t.Errorf("%s scored %d for challenges, want 0", s.Player, s.Total)
+		}
+	}
+	if traitors := res.Teams[len(res.Teams)-1]; !traitors.Traitors || traitors.Challenges != 2 || traitors.Score != 2*PointsChallenge {
+		t.Errorf("traitors' camp = %+v, want 2 challenges for %d points", traitors, 2*PointsChallenge)
+	}
+
+	_ = g.SetChallengesDone([]bool{false, false, false})
+	if got := g.ChallengesDone(); got != 0 {
+		t.Errorf("ChallengesDone after unchecking = %d, want 0", got)
 	}
 }
 
@@ -259,11 +277,11 @@ func TestCancelDraw(t *testing.T) {
 	if err := g.CancelDraw(); err != nil {
 		t.Fatalf("CancelDraw: %v", err)
 	}
-	if g.Phase != PhaseSetup || g.SetupID != "" {
-		t.Errorf("phase %s, setup %q after cancel", g.Phase, g.SetupID)
+	if g.Phase != PhaseSetup || g.SetupID != "" || g.Challenges != nil {
+		t.Errorf("phase %s, setup %q, challenges %v after cancel", g.Phase, g.SetupID, g.Challenges)
 	}
 	for _, p := range g.Players {
-		if p.Slot != "" || p.Character != "" || len(p.Signs) > 0 || len(p.Guesses) > 0 || p.Name == "" {
+		if p.Slot != "" || p.Character != "" || p.Sign != "" || p.Traitor || len(p.Guesses) > 0 || p.Name == "" {
 			t.Errorf("player not reset: %+v", p)
 		}
 	}

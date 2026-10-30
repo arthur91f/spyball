@@ -7,70 +7,20 @@ import (
 	"strings"
 )
 
-// Color is the kind of a slot in a setup.
+// Color is the team of a slot in a setup. Traitors are ordinary members of their color.
 type Color string
 
 const (
-	Blue   Color = "blue"
-	Red    Color = "red"
-	White  Color = "white"  // neutral that chooses its camp: blue, red or stays neutral
-	Yellow Color = "yellow" // neutral with an asymmetric Rule
+	Blue Color = "blue"
+	Red  Color = "red"
 )
 
 // Colors lists every color in display order.
-var Colors = []Color{Blue, Red, White, Yellow}
+var Colors = []Color{Blue, Red}
 
 func (c Color) valid() bool {
 	switch c {
-	case Blue, Red, White, Yellow:
-		return true
-	}
-	return false
-}
-
-// SignColors lists the sign lists a slot of this color draws one sign from each.
-// White slots draw a blue sign and a red sign, so they can choose which camp recognizes them.
-func (c Color) SignColors() []Color {
-	if c == White {
-		return []Color{Blue, Red}
-	}
-	return []Color{c}
-}
-
-// Camp is a scoring team. White players end up in one of them; yellow players are Neutral.
-type Camp string
-
-const (
-	CampBlue    Camp = "blue"
-	CampRed     Camp = "red"
-	CampNeutral Camp = "neutral"
-)
-
-// Camps lists every camp in display order.
-var Camps = []Camp{CampBlue, CampRed, CampNeutral}
-
-func (c Camp) valid() bool {
-	switch c {
-	case CampBlue, CampRed, CampNeutral:
-		return true
-	}
-	return false
-}
-
-// Rule is the asymmetric scoring rule of a yellow slot.
-type Rule string
-
-const (
-	AllyOfEveryone  Rule = "ally_of_everyone"
-	EnemyOfEveryone Rule = "enemy_of_everyone"
-)
-
-// Rules lists every known rule.
-var Rules = []Rule{AllyOfEveryone, EnemyOfEveryone}
-
-func (r Rule) valid() bool {
-	switch r {
-	case AllyOfEveryone, EnemyOfEveryone:
+	case Blue, Red:
 		return true
 	}
 	return false
@@ -86,7 +36,7 @@ func (id SlotID) Parse() (Color, int, error) {
 		return "", 0, fmt.Errorf("slot %q: expected <color>-<number>", id)
 	}
 	if !Color(color).valid() {
-		return "", 0, fmt.Errorf("slot %q: unknown color %q", id, color)
+		return "", 0, fmt.Errorf("slot %q: unknown color %q, want blue or red", id, color)
 	}
 	n, err := strconv.Atoi(num)
 	if err != nil || n < 1 || strconv.Itoa(n) != num {

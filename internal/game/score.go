@@ -2,83 +2,117 @@ package game
 
 import "github.com/arthur91f/spyball/internal/config"
 
-// The scoring rules of the V1, kept together so they are easy to revise.
+// The scoring rules, kept together so they are easy to revise.
 const (
-	pointsRightGuess = 1
-	pointsWrongGuess = -1
-	// NeutralTeamFactor: the neutral team score is multiplied by NeutralTeamFactor/n, n being its number
-	// of members, to make up for being fewer.
-	NeutralTeamFactor = 4
+	// Points earned by the player who makes a guess.
+	PointsAllyFound  = 2 // an ally guessed as an ally
+	PointsEnemyFound = 2 // an enemy guessed as an enemy
+	PointsWrongGuess = 0 // an ally guessed as an enemy, or an enemy as an ally
+
+	// Points earned by the player a guess is about, whoever makes it and whether it is right or not.
+	PointsDesignatedAlly  = 1  // guessed as an ally
+	PointsDesignatedEnemy = -2 // guessed as an enemy
+
+	// PointsChallenge is earned by the traitors' camp for each challenge done, whoever did it.
+	PointsChallenge = 4
 )
 
 // PlayerScore details the score of one player.
 type PlayerScore struct {
-	Player PlayerID
-	Camp   config.Camp
-	Right  int // correct guesses
-	Wrong  int // wrong guesses
-	Manual int // sum of the admin's manual points
-	Total  int
+	Player  PlayerID
+	Color   config.Color
+	Traitor bool
+
+	AlliesFound     int // allies the player guessed as allies
+	EnemiesFound    int // enemies the player guessed as enemies
+	Wrong           int // wrong guesses of the player
+	DesignatedAlly  int // players who guessed the player as an ally
+	DesignatedEnemy int // players who guessed the player as an enemy
+	Manual          int // sum of the admin's manual points
+	Total           int
 }
 
-// TeamScore is the score of a camp: the sum of its members' totals, weighted for the neutral team.
+// TeamScore is the score of a camp. A color camp scores the totals of its members who are not traitors.
+// The traitors' camp scores the totals of all the traitors, plus the points of the challenges done.
 type TeamScore struct {
-	Camp    config.Camp
-	Members int
-	Sum     int
-	Score   float64
+	Color      config.Color // empty for the traitors' camp
+	Traitors   bool         // the traitors' camp
+	Members    int
+	Challenges int // traitors' camp only: challenges done
+	Score      int
 }
 
-// Results are the scores of every player (in game order) and of every camp that has members.
+// Results are the scores of every player (in game order) and of every camp that has members:
+// the colors, then the traitors. Traitors are scored like everyone else, but for the traitors' camp.
 type Results struct {
 	Players []PlayerScore
 	Teams   []TeamScore
 }
 
-// Score computes the results from the current guesses, camp choices and manual points.
+// Score computes the results from the current guesses, challenges done and manual points.
 func (g *Game) Score() Results {
-	manual := map[PlayerID]int{}
+	scores := make(map[PlayerID]*PlayerScore, len(g.Players))
+	for _, p := range g.Players {
+		scores[p.ID] = &PlayerScore{Player: p.ID, Color: p.Color, Traitor: p.Traitor}
+	}
 	for _, mp := range g.ManualPoints {
-		manual[mp.Player] += mp.Points
+		if s := scores[mp.Player]; s != nil {
+			s.Manual += mp.Points
+		}
 	}
 
-	var res Results
-	teams := map[config.Camp]*TeamScore{}
 	for _, p := range g.Players {
-		s := PlayerScore{Player: p.ID, Camp: p.Camp(), Manual: manual[p.ID]}
+		s := scores[p.ID]
 		for targetID, guess := range p.Guesses {
 			target, err := g.Player(targetID)
 			if err != nil {
 				continue
 			}
-			if guess == Relation(p, target) {
-				s.Right++
-			} else {
+			switch {
+			case guess != Relation(p, target):
 				s.Wrong++
+			case guess == GuessAlly:
+				s.AlliesFound++
+			default:
+				s.EnemiesFound++
+			}
+			if guess == GuessAlly {
+				scores[targetID].DesignatedAlly++
+			} else {
+				scores[targetID].DesignatedEnemy++
 			}
 		}
-		s.Total = s.Right*pointsRightGuess + s.Wrong*pointsWrongGuess + s.Manual
-		res.Players = append(res.Players, s)
-
-		team := teams[s.Camp]
-		if team == nil {
-			team = &TeamScore{Camp: s.Camp}
-			teams[s.Camp] = team
-		}
-		team.Members++
-		team.Sum += s.Total
 	}
 
-	for _, camp := range config.Camps {
-		team := teams[camp]
-		if team == nil {
-			continue
+	var res Results
+	teams := map[config.Color]*TeamScore{}
+	traitors := &TeamScore{Traitors: true}
+	for _, p := range g.Players {
+		s := scores[p.ID]
+		s.Total = s.AlliesFound*PointsAllyFound + s.EnemiesFound*PointsEnemyFound + s.Wrong*PointsWrongGuess +
+			s.DesignatedAlly*PointsDesignatedAlly + s.DesignatedEnemy*PointsDesignatedEnemy + s.Manual
+		res.Players = append(res.Players, *s)
+
+		team := teams[s.Color]
+		if s.Traitor {
+			team = traitors
+		} else if team == nil {
+			team = &TeamScore{Color: s.Color}
+			teams[s.Color] = team
 		}
-		team.Score = float64(team.Sum)
-		if camp == config.CampNeutral {
-			team.Score *= float64(NeutralTeamFactor) / float64(team.Members)
+		team.Members++
+		team.Score += s.Total
+	}
+
+	for _, color := range config.Colors {
+		if team := teams[color]; team != nil {
+			res.Teams = append(res.Teams, *team)
 		}
-		res.Teams = append(res.Teams, *team)
+	}
+	if traitors.Members > 0 {
+		traitors.Challenges = g.ChallengesDone()
+		traitors.Score += traitors.Challenges * PointsChallenge
+		res.Teams = append(res.Teams, *traitors)
 	}
 	return res
 }

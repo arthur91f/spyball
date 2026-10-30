@@ -12,15 +12,25 @@ type Theme struct {
 	ID         string // directory name
 	Name       string
 	Story      string
-	Teams      map[Camp]Team
+	Teams      map[Color]Team
+	Traitor    Role // themed name of the traitors
 	Characters map[Color][]Character
-	Signs      map[Color][]string // blue, red and yellow lists (see Color.SignColors); placeholders already replaced
+	Signs      map[Color][]string // placeholders already replaced
+	// Challenges are what traitors try to make other players do; placeholders already replaced.
+	Challenges []string
 }
 
-// Team is the themed name of a camp.
+// Team is the themed name of a color.
 type Team struct {
 	Name        string `yaml:"name"`
-	Member      string `yaml:"member"` // noun for one member, substituted for {camp} in signs
+	Member      string `yaml:"member"` // noun for one member, substituted for {blue} or {red} in signs and challenges
+	Description string `yaml:"description"`
+}
+
+// Role is the themed name of a special role.
+type Role struct {
+	Name        string `yaml:"name"`
+	Team        string `yaml:"team"` // name of the camp the players with this role form
 	Description string `yaml:"description"`
 }
 
@@ -28,15 +38,16 @@ type Team struct {
 type Character struct {
 	Name        string `yaml:"name"`
 	Description string `yaml:"description"`
-	Rule        Rule   `yaml:"rule"` // yellow characters only: the slot rule it can fill
 }
 
 type themeFile struct {
 	Name       string                `yaml:"name"`
 	Story      string                `yaml:"story"`
-	Teams      map[Camp]Team         `yaml:"teams"`
+	Teams      map[Color]Team        `yaml:"teams"`
+	Traitor    Role                  `yaml:"traitor"`
 	Characters map[Color][]Character `yaml:"characters"`
 	Signs      map[Color][]string    `yaml:"signs"`
+	Challenges []string              `yaml:"challenges"`
 }
 
 var placeholderRe = regexp.MustCompile(`\{[^}]*\}`)
@@ -47,6 +58,7 @@ func newTheme(id string, f themeFile) (*Theme, error) {
 		Name:       f.Name,
 		Story:      f.Story,
 		Teams:      f.Teams,
+		Traitor:    f.Traitor,
 		Characters: f.Characters,
 		Signs:      map[Color][]string{},
 	}
@@ -55,21 +67,24 @@ func newTheme(id string, f themeFile) (*Theme, error) {
 	if t.Name == "" {
 		errs = append(errs, errors.New("missing name"))
 	}
-	for camp := range f.Teams {
-		if !camp.valid() {
-			errs = append(errs, fmt.Errorf("teams: unknown camp %q", camp))
+	for color := range f.Teams {
+		if !color.valid() {
+			errs = append(errs, fmt.Errorf("teams: unknown color %q, want blue or red", color))
 		}
 	}
-	for _, camp := range Camps {
-		if team := f.Teams[camp]; team.Name == "" || team.Member == "" {
-			errs = append(errs, fmt.Errorf("teams.%s: name and member are required", camp))
+	for _, color := range Colors {
+		if team := f.Teams[color]; team.Name == "" || team.Member == "" {
+			errs = append(errs, fmt.Errorf("teams.%s: name and member are required", color))
 		}
+	}
+	if f.Traitor.Name == "" || f.Traitor.Team == "" {
+		errs = append(errs, errors.New("traitor: name and team are required"))
 	}
 
 	names := map[string]bool{}
 	for color, chars := range f.Characters {
 		if !color.valid() {
-			errs = append(errs, fmt.Errorf("characters: unknown color %q", color))
+			errs = append(errs, fmt.Errorf("characters: unknown color %q, want blue or red", color))
 		}
 		for i, c := range chars {
 			where := fmt.Sprintf("characters.%s[%d]", color, i)
@@ -81,40 +96,17 @@ func newTheme(id string, f themeFile) (*Theme, error) {
 				errs = append(errs, fmt.Errorf("%s: duplicate character name %q", where, c.Name))
 			}
 			names[key] = true
-
-			switch {
-			case color == Yellow && !c.Rule.valid():
-				errs = append(errs, fmt.Errorf("%s: yellow characters need a rule among %v, got %q", where, Rules, c.Rule))
-			case color != Yellow && c.Rule != "":
-				errs = append(errs, fmt.Errorf("%s: only yellow characters can have a rule", where))
-			}
 		}
 	}
 
 	seen := map[string]bool{}
 	for color, signs := range f.Signs {
-		switch {
-		case color == White:
-			errs = append(errs, errors.New("signs.white: white players draw from the blue and red lists, remove this list"))
-		case !color.valid():
-			errs = append(errs, fmt.Errorf("signs: unknown color %q", color))
+		if !color.valid() {
+			errs = append(errs, fmt.Errorf("signs: unknown color %q, want blue or red", color))
 		}
-		for i, sign := range signs {
-			where := fmt.Sprintf("signs.%s[%d]", color, i)
-			expanded := t.expand(sign)
-			switch {
-			case strings.TrimSpace(sign) == "":
-				errs = append(errs, fmt.Errorf("%s: empty sign", where))
-			case seen[expanded]:
-				errs = append(errs, fmt.Errorf("%s: duplicate sign %q", where, sign))
-			}
-			if p := placeholderRe.FindString(expanded); p != "" {
-				errs = append(errs, fmt.Errorf("%s: unknown placeholder %s, want one of {blue}, {red}, {neutral}", where, p))
-			}
-			seen[expanded] = true
-			t.Signs[color] = append(t.Signs[color], expanded)
-		}
+		t.Signs[color] = t.textList(fmt.Sprintf("signs.%s", color), "sign", signs, seen, &errs)
 	}
+	t.Challenges = t.textList("challenges", "challenge", f.Challenges, map[string]bool{}, &errs)
 
 	if err := errors.Join(errs...); err != nil {
 		return nil, err
@@ -122,34 +114,42 @@ func newTheme(id string, f themeFile) (*Theme, error) {
 	return t, nil
 }
 
-// expand replaces {blue}, {red} and {neutral} with the member noun of the matching team.
+// textList validates a list of signs or challenges and returns them with placeholders replaced.
+// seen holds the texts already used, to reject duplicates across lists.
+func (t *Theme) textList(key, what string, texts []string, seen map[string]bool, errs *[]error) []string {
+	var list []string
+	for i, text := range texts {
+		where := fmt.Sprintf("%s[%d]", key, i)
+		expanded := t.expand(text)
+		switch {
+		case strings.TrimSpace(text) == "":
+			*errs = append(*errs, fmt.Errorf("%s: empty %s", where, what))
+		case seen[expanded]:
+			*errs = append(*errs, fmt.Errorf("%s: duplicate %s %q", where, what, text))
+		}
+		if p := placeholderRe.FindString(expanded); p != "" {
+			*errs = append(*errs, fmt.Errorf("%s: unknown placeholder %s, want {blue} or {red}", where, p))
+		}
+		seen[expanded] = true
+		list = append(list, expanded)
+	}
+	return list
+}
+
+// expand replaces {blue} and {red} with the member noun of the matching team.
 func (t *Theme) expand(s string) string {
-	for _, camp := range Camps {
-		s = strings.ReplaceAll(s, "{"+string(camp)+"}", t.Teams[camp].Member)
+	for _, color := range Colors {
+		s = strings.ReplaceAll(s, "{"+string(color)+"}", t.Teams[color].Member)
 	}
 	return s
 }
 
 // Cast returns the character of every slot of the setup: the n-th slot of a color gets the n-th character
-// of that color, except yellow slots which get the characters matching their rule, in order.
-// It fails if the theme lacks characters or signs for the setup.
+// of that color. It fails if the theme lacks characters, signs or challenges for the setup.
 func (t *Theme) Cast(s *Setup) (map[SlotID]Character, error) {
 	var errs []error
 	cast := make(map[SlotID]Character, len(s.Slots))
-	usedByRule := map[Rule]int{}
-
 	for _, slot := range s.Slots {
-		if slot.Color == Yellow {
-			candidates := t.charactersWithRule(slot.Rule)
-			if usedByRule[slot.Rule] >= len(candidates) {
-				errs = append(errs, fmt.Errorf("slot %s: theme %s has no more yellow character with rule %s", slot.ID, t.ID, slot.Rule))
-				continue
-			}
-			cast[slot.ID] = candidates[usedByRule[slot.Rule]]
-			usedByRule[slot.Rule]++
-			continue
-		}
-
 		chars := t.Characters[slot.Color]
 		if slot.Number > len(chars) {
 			errs = append(errs, fmt.Errorf("slot %s: theme %s has only %d %s characters", slot.ID, t.ID, len(chars), slot.Color))
@@ -158,30 +158,18 @@ func (t *Theme) Cast(s *Setup) (map[SlotID]Character, error) {
 		cast[slot.ID] = chars[slot.Number-1]
 	}
 
-	need := map[Color]int{}
-	for _, slot := range s.Slots {
-		for _, c := range slot.Color.SignColors() {
-			need[c]++
+	for _, color := range Colors {
+		if have, need := len(t.Signs[color]), s.CountColor(color); need > have {
+			errs = append(errs, fmt.Errorf("theme %s has %d %s signs, setup %s needs %d", t.ID, have, color, s.ID, need))
 		}
 	}
-	for _, color := range Colors {
-		if have := len(t.Signs[color]); need[color] > have {
-			errs = append(errs, fmt.Errorf("theme %s has %d %s signs, setup %s needs %d", t.ID, have, color, s.ID, need[color]))
-		}
+	// Every traitor gets the same challenges.
+	if have, need := len(t.Challenges), s.Challenges; need > have {
+		errs = append(errs, fmt.Errorf("theme %s has %d challenges, setup %s needs %d", t.ID, have, s.ID, need))
 	}
 
 	if err := errors.Join(errs...); err != nil {
 		return nil, err
 	}
 	return cast, nil
-}
-
-func (t *Theme) charactersWithRule(r Rule) []Character {
-	var chars []Character
-	for _, c := range t.Characters[Yellow] {
-		if c.Rule == r {
-			chars = append(chars, c)
-		}
-	}
-	return chars
 }

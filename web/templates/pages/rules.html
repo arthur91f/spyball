@@ -26,13 +26,8 @@
         <li class="team-red"><span class="badge team-red">{{.Red.Name}}</span> {{.Red.Description}}</li>
     </ul>
     <p>{{t "rules.camps.balance"}}</p>
-    <h3><span class="badge team-neutral">{{.Neutral.Name}}</span></h3>
-    {{with .Neutral.Description}}<p>{{.}}</p>{{end}}
-    <ul>
-        <li>{{tf "rules.camps.white" .Blue.Name .Red.Name}}</li>
-        {{with .AllyOfEveryone}}<li>{{tf "rules.camps.ally_of_everyone" .}}</li>{{end}}
-        {{with .EnemyOfEveryone}}<li>{{tf "rules.camps.enemy_of_everyone" .}}</li>{{end}}
-    </ul>
+    <h3><span class="badge traitor">{{.Traitor.Name}}</span></h3>
+    <p>{{t "rules.camps.traitors"}}</p>
 </section>
 
 <section class="card">
@@ -40,8 +35,8 @@
     <ul>
         <li>{{t "rules.role.character"}}</li>
         <li>{{t "rules.role.sign"}}</li>
-        <li>{{t "rules.role.white_signs"}}</li>
         <li>{{t "rules.role.clues"}}</li>
+        <li>{{t "rules.role.challenges"}}</li>
     </ul>
     <p>{{t "rules.role.login"}}</p>
 </section>
@@ -58,28 +53,19 @@
 
 <section class="card">
     <h2>{{t "rules.score.title"}}</h2>
+    {{with .Points}}
     <ul>
-        <li>{{t "rules.score.right"}}</li>
-        <li>{{t "rules.score.wrong"}}</li>
+        <li>{{tf "rules.score.ally_found" .AllyFound}}</li>
+        <li>{{tf "rules.score.enemy_found" .EnemyFound}}</li>
+        <li>{{tf "rules.score.wrong" .Wrong}}</li>
+        <li>{{tf "rules.score.designated_ally" .DesignatedAlly}}</li>
+        <li>{{tf "rules.score.designated_enemy" .DesignatedEnemy}}</li>
+        <li>{{tf "rules.score.challenges" .Challenge}}</li>
         <li>{{t "rules.score.manual"}}</li>
     </ul>
+    {{end}}
     <p>{{t "rules.score.relations"}}</p>
-    <ul>
-        <li>{{t "rules.score.same_camp"}}</li>
-        <li>{{tf "rules.score.neutral" .Neutral.Name}}</li>
-        <li>{{t "rules.score.white"}}</li>
-        {{if .AllyOfEveryone}}<li>{{t "rules.score.special"}}</li>{{end}}
-    </ul>
-    <p>{{tf "rules.score.teams" .Neutral.Name .NeutralFactor}}</p>
+    <p>{{t "rules.score.teams"}}</p>
 </section>
 
-{{if .Cast}}
-<section class="card">
-    <h2>{{t "rules.cast.title"}}</h2>
-    <p class="muted">{{tf "rules.cast.help" .SetupName}}</p>
-    {{range .Cast}}
-    <p><span class="camp team-{{.Color}}">{{.Label}}</span> : {{range $i, $name := .Names}}{{if $i}}, {{end}}{{$name}}{{end}}</p>
-    {{end}}
-</section>
-{{end}}
 {{end}}

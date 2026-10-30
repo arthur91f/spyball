@@ -3,6 +3,7 @@ package server
 import (
 	"html/template"
 	"io"
+	"io/fs"
 	"math/rand/v2"
 	"net/http"
 	"net/http/httptest"
@@ -23,10 +24,48 @@ func newTestServer(t *testing.T) *Server {
 	return newTestServerAt(t, t.TempDir())
 }
 
+// traitorsSetup is a test-only variant of 12-classic with two traitors per team.
+const traitorsSetup = `
+name: Traîtres à 12
+weight: 1
+challenges: 2
+slots:
+  blue-1: { traitor: true, clues: [blue-2, red-1] }
+  blue-2: { clues: [blue-3, red-2] }
+  blue-3: { traitor: true, clues: [blue-4, red-3] }
+  blue-4: { clues: [blue-5, red-4] }
+  blue-5: { clues: [blue-6, red-5] }
+  blue-6: { clues: [blue-1, red-6] }
+  red-1: { traitor: true, clues: [red-2, blue-2] }
+  red-2: { clues: [red-3, blue-3] }
+  red-3: { clues: [red-4, blue-4] }
+  red-4: { traitor: true, clues: [red-5, blue-5] }
+  red-5: { clues: [red-6, blue-6] }
+  red-6: { clues: [red-1, blue-1] }
+`
+
+// testContent is the embedded content plus the setups/12-traitors.yaml test setup.
+func testContent(t *testing.T) fs.FS {
+	t.Helper()
+	files := fstest.MapFS{"setups/12-traitors.yaml": {Data: []byte(traitorsSetup)}}
+	err := fs.WalkDir(spyball.Content, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		data, err := fs.ReadFile(spyball.Content, path)
+		files[path] = &fstest.MapFile{Data: data}
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return files
+}
+
 // newTestServerAt starts a server saving its game in dataDir; two servers on the same dir model a restart.
 func newTestServerAt(t *testing.T, dataDir string) *Server {
 	t.Helper()
-	catalog, err := config.Load(spyball.Content)
+	catalog, err := config.Load(testContent(t))
 	if err != nil {
 		t.Fatalf("config.Load: %v", err)
 	}

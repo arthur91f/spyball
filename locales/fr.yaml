@@ -31,32 +31,33 @@ role:
     Et garde-le secret !
   closed: La partie est terminée, tes suppositions ne peuvent plus être modifiées.
   you_are: "%s, tu es :"
-  white_help: >-
-    Tu n'appartiens à aucun camp : avant la fin de la partie, choisis de rejoindre l'un des deux camps
-    ou de rester neutre. Pour le score, tu compteras entièrement comme membre du camp choisi.
-  rules:
-    ally_of_everyone: Pour le décompte des points, tu es l'allié de tout le monde.
-    enemy_of_everyone: Pour le décompte des points, tu es l'ennemi de tout le monde.
-  signs:
+  traitor_help: >-
+    Pour les alliés et les ennemis, tu es un membre ordinaire de ton camp. Mais tu as aussi des défis,
+    et ton score compte pour le camp des traîtres, pas pour ton camp.
+  sign:
     title: Ton signe
     help: >-
       Fais-le régulièrement pendant la soirée pour que tes alliés te repèrent,
       mais pas trop : les joueurs attentifs pourraient se méfier.
-    for: "Pour te faire reconnaître des %s :"
+  challenges:
+    title: Tes défis
+    help: >-
+      Les traîtres ont tous ces défis : réussissez-les pendant la soirée, sans vous faire repérer.
+      À la fin, l'organisateur indiquera lesquels ont été réalisés : +%d points pour le camp des traîtres
+      par défi réalisé, quel que soit le traître qui l'a fait. Si tu vois quelqu'un s'y essayer, tu sais à qui tu as affaire.
   clues:
     title: Tes indices
-    help: "Tu reconnaîtras ces personnages à leur signe :"
+    help: "Tu reconnaîtras ces joueurs à leur signe :"
     none: Tu n'as aucun indice. À toi d'observer !
-    or: ou
-  camp:
-    title: Ton camp
-    help: Tu peux changer d'avis jusqu'à la fin de la partie.
-    submit: Enregistrer mon choix
   guesses:
     title: Mes suppositions
     help: >-
       Pour chaque joueur, indique si tu penses qu'il est ton allié ou ton ennemi.
-      Bonne réponse : +1 point, mauvaise réponse : −1 point. Laisse « ? » si tu ne sais pas.
+      Laisse « ? » si tu ne sais pas.
+    points: >-
+      Allié trouvé : %+d, ennemi trouvé : %+d, erreur : %d.
+      Chaque joueur qui te désigne comme allié te rapporte %+d, chaque joueur qui te désigne comme ennemi : %d,
+      qu'il ait raison ou non. Un score peut être négatif.
     ally: Allié
     none: "?"
     enemy: Ennemi
@@ -65,9 +66,6 @@ role:
 
 error:
   home: Retour à l'accueil
-
-format:
-  decimal_separator: ","
 
 nav:
   rules: Règles
@@ -81,21 +79,26 @@ rules:
     tu dois retrouver tes alliés et démasquer tes ennemis. À la fin, tout est dévoilé et on compte les points.
   camps:
     title: Les camps
-    balance: >-
-      Les deux camps comptent autant de joueurs. Les autres joueurs sont neutres, au rôle un peu à part :
-    white: >-
-      Les non-alignés reçoivent un signe de chaque camp et choisissent, avant la fin de la partie,
-      de rejoindre les %s, les %s, ou de rester neutres.
-    ally_of_everyone: "%s : allié de tout le monde. Tout le monde a intérêt à le désigner comme allié."
-    enemy_of_everyone: "%s : ennemi de tout le monde. Tout le monde a intérêt à le désigner comme ennemi… s'il ne se fait pas passer pour un allié."
+    balance: Les deux camps ne comptent pas forcément autant de joueurs.
+    traitors: >-
+      Des traîtres se cachent parmi les joueurs, environ un tous les 4 ou 5 joueurs. Combien dans chaque camp ?
+      Cela dépend de la configuration tirée au sort, qui reste secrète jusqu'à la fin.
+      Un traître reste un membre ordinaire de son camp pour les alliés et les ennemis, mais il a aussi des défis
+      à relever. Les traîtres forment un camp à part pour le score : leurs points et ceux des défis réalisés
+      comptent pour ce camp, pas pour celui dont ils portent les couleurs.
   role:
     title: Ton rôle
     character: Un personnage, qui indique ton camp. Garde-le secret !
     sign: >-
       Un signe d'appel : un comportement à glisser régulièrement dans la soirée pour que tes alliés te repèrent.
       Pas trop souvent : les joueurs attentifs pourraient se méfier.
-    white_signs: Les non-alignés ont deux signes, un pour chaque camp, et choisissent par qui se faire reconnaître.
-    clues: Des indices sur quelques autres personnages et leur signe, pour t'aider à les repérer.
+    clues: >-
+      Des indices sur quelques autres joueurs : leur camp et leur signe, pour t'aider à les repérer
+      (jamais leur personnage, qui leur sert de mot de passe, ni s'ils sont traîtres).
+    challenges: >-
+      Pour les traîtres, des défis, les mêmes pour tous les traîtres de la partie : des actions discrètes
+      à réussir pendant la soirée sans se faire repérer. À la fin, l'organisateur indique quels défis ont été
+      réalisés : chacun rapporte des points au camp des traîtres, quel que soit celui qui l'a fait.
     login: >-
       Pour découvrir ton rôle, connecte-toi avec ton nom. Le site te révèle ton personnage : retiens-le,
       il te servira de mot de passe pour te reconnecter.
@@ -113,41 +116,40 @@ rules:
       Tu peux changer d'avis jusqu'à la clôture de la partie.
   score:
     title: Le décompte des points
-    right: "+1 point par allié ou ennemi correctement identifié ;"
-    wrong: "−1 point par allié désigné comme ennemi ou ennemi désigné comme allié ;"
-    manual: "des points donnés par l'organisateur : défis réussis, dénonciations publiques…"
-    relations: "Qui est allié de qui :"
-    same_camp: deux joueurs du même camp sont alliés, deux joueurs de camps différents sont ennemis ;
-    neutral: "les %s restés neutres sont des ennemis pour les deux camps, et des alliés entre eux ;"
-    white: un non-aligné qui a rejoint un camp compte entièrement comme membre de ce camp ;
-    special: les rôles spéciaux ci-dessus font exception (l'allié de tout le monde l'emporte sur l'ennemi de tout le monde).
+    ally_found: "%+d points par allié que tu désignes comme allié ;"
+    enemy_found: "%+d points par ennemi que tu désignes comme ennemi ;"
+    wrong: "%d point par erreur (allié désigné comme ennemi ou ennemi désigné comme allié) ;"
+    designated_ally: "%+d point par joueur qui te désigne comme allié, qu'il ait raison ou non ;"
+    designated_enemy: "%d points par joueur qui te désigne comme ennemi, qu'il ait raison ou non ;"
+    challenges: "%+d points par défi réalisé, pour le camp des traîtres ;"
+    manual: "des points donnés par l'organisateur : dénonciations publiques…"
+    relations: >-
+      Deux joueurs du même camp sont alliés, deux joueurs de camps différents sont ennemis.
+      Les traîtres ne font pas exception.
     teams: >-
-      Le score d'un camp est la somme des scores de ses joueurs. Moins nombreux, les %s voient
-      leur score multiplié par %d divisé par leur nombre. Le camp qui a le plus de points gagne !
-  cast:
-    title: Les personnages de cette partie
-    help: "Configuration « %s ». Qui les incarne ? C'est à toi de le découvrir."
-    white: Non-alignés
-    yellow: Rôles spéciaux
+      Le score d'un camp est la somme des scores de ses joueurs, sans ses traîtres. Les traîtres forment leur propre
+      camp : la somme de leurs scores, plus les points des défis réalisés. Le camp qui a le plus de points gagne.
+      Un score peut être négatif.
 
 results:
   title: Résultats
   link: Voir les résultats
   not_yet: Les résultats seront visibles quand l'organisateur aura clôturé la partie.
+  setup: "Configuration tirée au sort : %s"
   points: pts
   teams:
     title: Classement des camps
-    members: "%d joueurs"
-    weighted: "somme %d × %d/%d (bonus des neutres)"
+    members: "%d joueurs, sans les traîtres"
+    traitors: "%d traîtres, %d défi(s) réalisé(s)"
     winner: Victoire !
   players:
     title: Classement des joueurs
     help: Touche un joueur pour voir le détail de ses suppositions.
-    white: non-aligné rallié
-    ally_of_everyone: allié de tous
-    enemy_of_everyone: ennemi de tous
-    right: "%d bonne(s) réponse(s)"
+    allies_found: "%d allié(s) trouvé(s)"
+    enemies_found: "%d ennemi(s) trouvé(s)"
     wrong: "%d erreur(s)"
+    designated_ally: "désigné allié %d fois"
+    designated_enemy: "désigné ennemi %d fois"
     manual: "%s point(s) manuel(s)"
     no_guess: Aucune supposition.
   guess:
@@ -155,6 +157,12 @@ results:
     enemy: ennemi
     correct: juste
     wrong: faux
+  challenges:
+    title: Défis des traîtres
+    help: "Chaque défi réalisé rapporte %d points au camp des traîtres."
+    review_link: Indiquer les défis réalisés, sur la page d'administration
+    done: ✓ réalisé
+    not_done: non réalisé
   manual:
     title: Points manuels
     none: Aucun point manuel pour l'instant.
@@ -165,7 +173,6 @@ results:
     points: Points (négatif pour une pénalité)
     reason: Raison
     reasons:
-      challenge: Défi réussi
       denounced: Dénoncé publiquement
       denouncer: Dénonciation publique
     add: Ajouter
@@ -188,7 +195,10 @@ admin:
   draw:
     title: Tirage des rôles
     theme: Thème
-    setup: Configuration
+    setups: >-
+      La configuration (nombre de traîtres, indices…) sera tirée au sort parmi celles prévues pour ce nombre de joueurs,
+      selon leur poids. Elle restera secrète jusqu'à la clôture.
+    chance: "(%d %%)"
     submit: Tirer les rôles au sort
     confirm: Tirer les rôles maintenant ? La liste des joueurs ne pourra plus être modifiée sans annuler le tirage.
     no_setup: Aucune configuration n'existe pour %d joueurs. Ajoutez ou retirez des joueurs.
@@ -213,6 +223,10 @@ admin:
     help: Revient à la saisie des joueurs. Tous les rôles et toutes les suppositions seront perdus.
     submit: Annuler le tirage
     confirm: Annuler le tirage ? Tous les rôles et toutes les suppositions seront perdus.
+  challenges:
+    title: Défis des traîtres
+    help: "Coche les défis réalisés pendant la soirée, peu importe par quel traître : +%d points par défi pour le camp des traîtres."
+    submit: Enregistrer
   closed:
     title: Partie terminée
     help: Les suppositions sont figées. Les résultats sont visibles par tous.
@@ -232,6 +246,7 @@ errors:
   duplicate_name: Ce nom est déjà utilisé.
   player_count: Le nombre de joueurs ne correspond pas à la configuration choisie.
   incompatible_theme: Ce thème ne peut pas être utilisé avec cette configuration.
+  no_setup: Aucune configuration ne correspond à ce nombre de joueurs avec ce thème.
   character_required: "Tu t'es déjà connecté une fois : indique aussi le nom de ton personnage."
   wrong_character: Ce n'est pas le bon personnage.
   invalid: Requête invalide.

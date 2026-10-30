@@ -2,13 +2,16 @@
 #
 # story      : récit affiché en tête des règles ; une ligne vide sépare deux paragraphes.
 #
-# teams      : nom des camps (blue, red, neutral) ; « member » désigne un membre du camp
-#              et remplace {blue}, {red} ou {neutral} dans les signes.
+# teams      : nom des camps (blue, red) ; « member » désigne un membre du camp
+#              et remplace {blue} ou {red} dans les signes et les défis.
+# traitor    : nom d'un traître (name), nom de leur camp (team) et description. Un traître est un membre ordinaire
+#              de son camp pour les alliés et les ennemis, mais son score compte pour le camp des traîtres,
+#              qui marque aussi les points des défis réalisés.
 # characters : personnages par couleur. L'emplacement <couleur>-N reçoit le N-ième personnage de sa couleur.
-#              Les jaunes sont choisis selon leur règle (rule) : ally_of_everyone ou enemy_of_everyone.
 #              Les noms doivent être uniques : ils servent de mot de passe aux joueurs.
-# signs      : signes tirés au hasard (sans doublon) : listes blue, red et yellow.
-#              Les blancs n'ont pas de liste : ils tirent un signe bleu et un signe rouge.
+# signs      : signes tirés au hasard (sans doublon), un par joueur selon sa couleur.
+# challenges : défis tirés au hasard (sans doublon) pour la partie, les mêmes pour tous les traîtres :
+#              une action discrète à réussir pendant la soirée. À la fin, l'organisateur atteste qui l'a réussie.
 
 name: Le bal des nations
 story: >-
@@ -31,12 +34,13 @@ teams:
     description: >-
       Méfiants envers les beaux discours, leurs espions communiquent par gestes :
       soyez attentifs aux postures, mimiques et manies étranges.
-  neutral:
-    name: Non-alignés
-    member: non-aligné
-    description: >-
-      Ils tirent leur épingle du jeu à leur manière et forment un camp à part
-      pour le décompte des points.
+
+traitor:
+  name: Agent double
+  team: Agents doubles
+  description: >-
+    Officiellement, tu sers ton camp. Mais tu as aussi tes propres affaires à mener,
+    et personne ne doit s'en apercevoir.
 
 characters:
   blue:
@@ -46,6 +50,7 @@ characters:
     - name: France
     - name: Canada
     - name: Japon
+    - name: Italie
   red:
     - name: Russie
     - name: Chine
@@ -53,24 +58,6 @@ characters:
     - name: Iran
     - name: Biélorussie
     - name: Cuba
-  white:
-    - name: Inde
-      description: Puissance montante, tu es courtisée par tout le monde.
-    - name: Brésil
-      description: Géant du Sud, tu es courtisé par tout le monde.
-    - name: Turquie
-      description: À la croisée des chemins, tu es courtisée par tout le monde.
-  yellow:
-    - name: ONG P.L.S.
-      rule: ally_of_everyone
-      description: >-
-        Tu organises le gala et tu sais bien que la plupart des invités ne sont pas là pour la cause.
-        Tout le monde a intérêt à te désigner comme allié.
-    - name: Anonymous
-      rule: enemy_of_everyone
-      description: >-
-        Tu as espionné presque tout le monde. Tout le monde a intérêt à te désigner comme ennemi :
-        fais-toi passer pour un allié.
 
 signs:
   blue:
@@ -104,15 +91,14 @@ signs:
     - faire des checks de plus de deux mouvements
     - regarder l'heure ostensiblement
     - tapoter du pied en rythme
-  yellow:
-    - faire chanter un {red}
-    - faire siffler un {red}
-    - faire dire des grossièretés à un {red}
-    - mettre un {red} au défi d'inverser deux mots
-    - faire faire des grimaces à un {blue}
-    - faire faire des clins d'œil à un {blue}
-    - faire faire un moonwalk ou twerker un {blue}
-    - faire faire un check de plus de deux mouvements à un {blue}
-    - lancer un « tu préfères » avec au moins 4 participants et 2 tours
-    - lancer un concours de blagues avec au moins 4 participants et 2 tours
-    - lancer un concours de mime avec au moins 4 participants et 2 tours
+
+challenges:
+  - déplacer les BDs Snoopy sur l'étagère du bas
+  - accrocher un grelot à la porte
+  - allumer la lumière de la hotte
+  - mettre un pins dans un pot du balcon
+  - trier les bouteilles d'alcool sur la table par ordre alphabétique
+  - coincoin doit retrouver coincouine
+  - mettre une pince à linge dans le dos de quelqu'un
+  - cacher la souris dans une chaussure
+ 

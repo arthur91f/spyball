@@ -3,14 +3,15 @@ package server
 import (
 	"net/http"
 	"net/url"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/arthur91f/spyball/internal/config"
 	"github.com/arthur91f/spyball/internal/game"
 )
 
-// closedGame plays a game where every player guesses about the next one, a white joins red, then closes it.
+// closedGame plays a game where every player guesses about the next one, then closes it.
 func closedGame(t *testing.T) *testClient {
 	t.Helper()
 	admin := startedGame(t)
@@ -23,9 +24,6 @@ func closedGame(t *testing.T) *testClient {
 			}
 			if err := g.SetGuess(p.ID, next.ID, guess); err != nil {
 				return err
-			}
-			if p.Color == config.White {
-				_ = g.ChooseCamp(p.ID, config.CampRed)
 			}
 		}
 		return nil
@@ -69,11 +67,20 @@ func TestResultsPage(t *testing.T) {
 			t.Errorf("player %s / %s not revealed", p.Name, p.Character)
 		}
 	}
+	if len(res.Teams) != 3 || !res.Teams[2].Traitors {
+		t.Fatalf("teams = %+v, want blue, red and the traitors", res.Teams)
+	}
 	for _, team := range res.Teams {
-		want := admin.srv.formatScore(team.Score) + "&nbsp;pts"
-		if !strings.Contains(body, want) {
-			t.Errorf("team %s score %q not shown", team.Camp, want)
+		want := `<span class="badge team-` + string(team.Color) + `">`
+		if team.Traitors {
+			want = `<span class="badge team-traitors">Agents doubles</span>`
 		}
+		if !strings.Contains(body, want) || !strings.Contains(body, strconv.Itoa(team.Score)+"&nbsp;pts") {
+			t.Errorf("team %+v not shown", team)
+		}
+	}
+	if !strings.Contains(body, "2 traîtres, 0 défi(s) réalisé(s)") {
+		t.Error("traitors' camp details not shown")
 	}
 	if !strings.Contains(body, "Victoire !") {
 		t.Error("no winner shown")
@@ -91,15 +98,6 @@ func TestResultsPage(t *testing.T) {
 	_, body = admin.get("/results")
 	if !strings.Contains(body, `action="/results/points"`) {
 		t.Error("admin does not see the points form")
-	}
-}
-
-func TestFormatScore(t *testing.T) {
-	srv := newTestServer(t)
-	for score, want := range map[float64]string{4: "4", -2: "-2", 16.0 / 3: "5,3", 0: "0"} {
-		if got := srv.formatScore(score); got != want {
-			t.Errorf("formatScore(%v) = %q, want %q", score, got, want)
-		}
 	}
 }
 
@@ -158,5 +156,90 @@ func TestManualPointsOnlyAfterClose(t *testing.T) {
 	resp, _ := admin.post("/results/points", url.Values{"player": {string(p.ID)}, "points": {"1"}})
 	if resp.StatusCode != http.StatusBadRequest || len(admin.game().ManualPoints) != 0 {
 		t.Errorf("points before close: status %d", resp.StatusCode)
+	}
+}
+
+func TestChallengesDone(t *testing.T) {
+	admin := startedGame(t)
+	challenges := admin.game().Challenges
+	if len(challenges) < 2 {
+		t.Fatalf("%d challenges, want at least 2", len(challenges))
+	}
+	traitorsScore := func() int {
+		teams := admin.game().Score().Teams
+		return teams[len(teams)-1].Score
+	}
+	totals := func() []int {
+		var totals []int
+		for _, ps := range admin.game().Score().Players {
+			totals = append(totals, ps.Total)
+		}
+		return totals
+	}
+
+	// Challenges can only be checked once the game is closed.
+	if resp, _ := admin.post("/admin/challenges", url.Values{"done": {"0"}}); resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("check while running: status %d", resp.StatusCode)
+	}
+	admin.post("/admin/close", nil)
+	before, totalsBefore := traitorsScore(), totals()
+
+	// The admin page has one checkbox per challenge, and does not ask who did it.
+	_, body := admin.get("/admin")
+	for i, c := range challenges {
+		if !strings.Contains(body, htmlEscape(c.Text)) || !strings.Contains(body, `<input type="checkbox" name="done" value="`+strconv.Itoa(i)+`">`) {
+			t.Errorf("admin page lacks a checkbox for challenge %d %q", i, c.Text)
+		}
+	}
+	if strings.Contains(body, `name="traitor"`) {
+		t.Error("admin page asks which traitor did a challenge")
+	}
+
+	resp, body := admin.post("/admin/challenges", url.Values{"done": {"1"}})
+	if resp.Request.URL.Path != "/admin" || !strings.Contains(body, `<input type="checkbox" name="done" value="1" checked>`) {
+		t.Fatalf("check landed on %s:\n%s", resp.Request.URL, body)
+	}
+	// The points go to the traitors' camp, not to any player.
+	if got := traitorsScore(); got != before+game.PointsChallenge {
+		t.Errorf("traitors' camp: %d, want %d", got, before+game.PointsChallenge)
+	}
+	if got := totals(); !slices.Equal(got, totalsBefore) {
+		t.Errorf("player totals changed: %v, want %v", got, totalsBefore)
+	}
+
+	// Everyone sees which challenges were done; only the admin gets a link to change it.
+	visitor := admin.newPlayerClient()
+	_, body = visitor.get("/results")
+	for _, want := range []string{
+		htmlEscape(challenges[0].Text) + ` »
+            <small class="muted">non réalisé</small>`,
+		htmlEscape(challenges[1].Text) + ` »
+            <strong class="status validated">✓ réalisé</strong>`,
+		"2 traîtres, 1 défi(s) réalisé(s)",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("results page lacks %q", want)
+		}
+	}
+	if strings.Contains(body, `href="/admin#challenges"`) {
+		t.Error("visitor gets the link to check challenges")
+	}
+	if resp, _ := visitor.post("/admin/challenges", url.Values{"done": {"0"}}); resp.Request.URL.Path != "/admin/login" {
+		t.Errorf("visitor checking landed on %s", resp.Request.URL.Path)
+	}
+	if _, body := admin.get("/results"); !strings.Contains(body, `href="/admin#challenges"`) {
+		t.Error("admin gets no link to check challenges")
+	}
+
+	// Unchecking everything.
+	admin.post("/admin/challenges", url.Values{})
+	if got := traitorsScore(); got != before {
+		t.Errorf("traitors' camp after unchecking = %d, want %d", got, before)
+	}
+
+	for _, bad := range []string{"99", "-1", "x"} {
+		if resp, _ := admin.post("/admin/challenges", url.Values{"done": {bad}}); resp.StatusCode != http.StatusBadRequest {
+			t.Errorf("done=%s: status %d, want 400", bad, resp.StatusCode)
+		}
 	}
 }

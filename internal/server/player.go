@@ -20,7 +20,6 @@ func (s *Server) registerPlayer(mux *http.ServeMux) {
 
 	mux.HandleFunc("GET /me", s.handleRole)
 	mux.HandleFunc("POST /me/guesses", s.handleGuesses)
-	mux.HandleFunc("POST /me/camp", s.handleCamp)
 }
 
 // The player cookie holds the player ID and character. It is only valid while that player still has
@@ -118,28 +117,37 @@ type rolePage struct {
 	Character   string
 	Description string
 	Color       config.Color
-	Rule        config.Rule
 	TeamName    string
 	TeamHelp    string
+	Sign        string
 
-	Signs []roleSign
-	Clues []game.Clue
+	Traitor    *config.Role // themed name of the traitors, for traitors only
+	Challenges []string     // traitors only: the challenges shared by all the traitors
+	Clues      []roleClue
 
-	// White players only.
-	Camps  []campOption
-	Choice config.Camp
-
+	Points pointsHelp
 	Others []guessRow
 }
 
-type roleSign struct {
-	For  string // team that recognizes this sign; empty when there is only one sign
-	Text string
+// roleClue is a clue about another player: a badge for their color, then their sign.
+type roleClue struct {
+	Color config.Color
+	Label string
+	Sign  string
 }
 
-type campOption struct {
-	Value config.Camp
-	Name  string
+// pointsHelp is the scoring rules, to explain them on the pages.
+type pointsHelp struct {
+	AllyFound, EnemyFound, Wrong, DesignatedAlly, DesignatedEnemy, Challenge int
+}
+
+var points = pointsHelp{
+	AllyFound:       game.PointsAllyFound,
+	EnemyFound:      game.PointsEnemyFound,
+	Wrong:           game.PointsWrongGuess,
+	DesignatedAlly:  game.PointsDesignatedAlly,
+	DesignatedEnemy: game.PointsDesignatedEnemy,
+	Challenge:       game.PointsChallenge,
 }
 
 type guessRow struct {
@@ -164,6 +172,7 @@ func (s *Server) rolePage(id game.PlayerID, errMsg string) (rolePage, error) {
 			return err
 		}
 
+		team := theme.Teams[me.Color]
 		page = rolePage{
 			Error:       errMsg,
 			Closed:      g.Phase == game.PhaseClosed,
@@ -171,32 +180,21 @@ func (s *Server) rolePage(id game.PlayerID, errMsg string) (rolePage, error) {
 			Character:   me.Character,
 			Description: me.Description,
 			Color:       me.Color,
-			Rule:        me.Rule,
-			Clues:       clues,
-			Choice:      me.Camp(),
+			TeamName:    team.Name,
+			TeamHelp:    team.Description,
+			Sign:        me.Sign,
+			Points:      points,
+		}
+		if me.Traitor {
+			page.Traitor = &theme.Traitor
 		}
 
-		switch me.Color {
-		case config.Blue, config.Red:
-			team := theme.Teams[me.Camp()]
-			page.TeamName, page.TeamHelp = team.Name, team.Description
-		default:
-			team := theme.Teams[config.CampNeutral]
-			page.TeamName = team.Name
+		for _, c := range clues {
+			page.Clues = append(page.Clues, roleClue{Color: c.Color, Label: theme.Teams[c.Color].Member, Sign: c.Sign})
 		}
-
-		colors := me.Color.SignColors()
-		for i, sign := range me.Signs {
-			rs := roleSign{Text: sign}
-			if len(colors) > 1 {
-				rs.For = theme.Teams[config.Camp(colors[i])].Name
-			}
-			page.Signs = append(page.Signs, rs)
-		}
-
-		if me.Color == config.White {
-			for _, camp := range config.Camps {
-				page.Camps = append(page.Camps, campOption{Value: camp, Name: theme.Teams[camp].Name})
+		if me.Traitor {
+			for _, c := range g.Challenges {
+				page.Challenges = append(page.Challenges, c.Text)
 			}
 		}
 
@@ -267,17 +265,6 @@ func (s *Server) handleGuesses(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		redirect(w, r, "/me?saved=1#guesses")
-	})
-}
-
-func (s *Server) handleCamp(w http.ResponseWriter, r *http.Request) {
-	s.withPlayer(w, r, func(id game.PlayerID) {
-		camp := config.Camp(r.PostFormValue("camp"))
-		if err := s.store.Update(func(g *game.Game) error { return g.ChooseCamp(id, camp) }); err != nil {
-			s.renderRole(w, r, http.StatusBadRequest, id, s.describe(err))
-			return
-		}
-		redirect(w, r, "/me#camp")
 	})
 }
 

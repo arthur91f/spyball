@@ -32,6 +32,13 @@ const (
 	GuessEnemy Guess = "enemy"
 )
 
+// Challenge is an action the traitors try to do during the party. All the traitors share the same challenges;
+// at the end of the game, the admin tells which ones were done, without saying by whom.
+type Challenge struct {
+	Text string `json:"text"`
+	Done bool   `json:"done,omitempty"`
+}
+
 // Errors callers may want to tell apart, e.g. to show a translated message. Returned errors wrap them.
 var (
 	ErrWrongPhase        = errors.New("not allowed at this stage of the game")
@@ -40,6 +47,7 @@ var (
 	ErrDuplicateName     = errors.New("player name already used")
 	ErrPlayerCount       = errors.New("player count does not match the setup")
 	ErrIncompatibleTheme = errors.New("theme cannot be used with this setup")
+	ErrNoSetup           = errors.New("no setup for this number of players and theme")
 	ErrInvalid           = errors.New("invalid request")
 	ErrCharacterRequired = errors.New("character name required to log in again")
 	ErrWrongCharacter    = errors.New("wrong character name")
@@ -52,6 +60,7 @@ type Game struct {
 	ThemeID      string        `json:"theme_id,omitempty"`
 	SetupID      string        `json:"setup_id,omitempty"`
 	Players      []*Player     `json:"players"`
+	Challenges   []Challenge   `json:"challenges,omitempty"` // shared by all the traitors
 	ManualPoints []ManualPoint `json:"manual_points,omitempty"`
 	LastID       int           `json:"last_id"`
 }
@@ -62,14 +71,14 @@ type Player struct {
 	Name string   `json:"name"`
 
 	// Set by the draw.
-	Slot      config.SlotID `json:"slot,omitempty"`
-	Color     config.Color  `json:"color,omitempty"`
-	Rule      config.Rule   `json:"rule,omitempty"`
-	Character string        `json:"character,omitempty"`
+	Slot  config.SlotID `json:"slot,omitempty"`
+	Color config.Color  `json:"color,omitempty"`
+	// Traitor is an ordinary member of their color, with challenges and a ranking apart from their team.
+	Traitor   bool   `json:"traitor,omitempty"`
+	Character string `json:"character,omitempty"`
 	// Description is the themed text of the character, if any.
 	Description string `json:"description,omitempty"`
-	// Signs has one sign per entry of Color.SignColors(), in the same order.
-	Signs []string `json:"signs,omitempty"`
+	Sign        string `json:"sign,omitempty"`
 	// Clues are the players whose sign this player knows.
 	Clues []PlayerID `json:"clues,omitempty"`
 
@@ -77,12 +86,10 @@ type Player struct {
 	// Revealed is true once the player has logged in and seen their character; from then on,
 	// logging in requires the character name too.
 	Revealed bool               `json:"revealed,omitempty"`
-	Choice   config.Camp        `json:"choice,omitempty"` // white players only; empty means neutral
 	Guesses  map[PlayerID]Guess `json:"guesses,omitempty"`
 }
 
-// ManualPoint is a bonus or penalty given by the admin when results are shown
-// (successful yellow challenge, public denunciation…).
+// ManualPoint is a bonus or penalty given by the admin when results are shown (public denunciation…).
 type ManualPoint struct {
 	Player PlayerID `json:"player"`
 	Points int      `json:"points"`
@@ -179,25 +186,29 @@ func (g *Game) SetGuess(from, about PlayerID, guess Guess) error {
 	return nil
 }
 
-// ChooseCamp records the camp a white player joins. It can be changed until the game is closed.
-func (g *Game) ChooseCamp(id PlayerID, camp config.Camp) error {
-	if err := g.requirePhase(PhaseRunning); err != nil {
+// SetChallengesDone records, once the game is closed, which challenges were done: done[i] for the i-th one.
+func (g *Game) SetChallengesDone(done []bool) error {
+	if err := g.requirePhase(PhaseClosed); err != nil {
 		return err
 	}
-	p, err := g.Player(id)
-	if err != nil {
-		return err
+	if len(done) != len(g.Challenges) {
+		return fmt.Errorf("%w: %d answers for %d challenges", ErrInvalid, len(done), len(g.Challenges))
 	}
-	if p.Color != config.White {
-		return fmt.Errorf("%w: only white players choose their camp", ErrInvalid)
-	}
-	switch camp {
-	case config.CampBlue, config.CampRed, config.CampNeutral:
-		p.Choice = camp
-	default:
-		return fmt.Errorf("%w: unknown camp %q", ErrInvalid, camp)
+	for i := range g.Challenges {
+		g.Challenges[i].Done = done[i]
 	}
 	return nil
+}
+
+// ChallengesDone counts the challenges done.
+func (g *Game) ChallengesDone() int {
+	n := 0
+	for _, c := range g.Challenges {
+		if c.Done {
+			n++
+		}
+	}
+	return n
 }
 
 // Login identifies a player by name. The first time, the name is enough and the character is revealed;
@@ -237,7 +248,7 @@ func (g *Game) ResetLogin(id PlayerID) error {
 	return nil
 }
 
-// Close freezes guesses and camp choices; results become available.
+// Close freezes guesses; results become available and the admin can tell which challenges were done.
 func (g *Game) Close() error {
 	if err := g.requirePhase(PhaseRunning); err != nil {
 		return err

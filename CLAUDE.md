@@ -12,81 +12,77 @@ Il doit fonctionner pour n'importe quelle soirée et pour **6 à 24 joueurs**.
 ### Équipes
 Dans le code on ne parle que de couleurs ; le thème leur donne un nom.
 
-| Couleur  | Rôle dans le jeu | Thème d'origine (« bal des nations ») |
-|----------|------------------|---------------------------------------|
-| `blue`   | Équipe classique | Démocraties du monde libre (OTAN) |
-| `red`    | Équipe classique | Puissances autoritaires |
-| `white`  | Neutre qui **choisit** son camp en fin de partie : `blue`, `red` ou rester neutre | États non alignés (Inde, Brésil…) |
-| `yellow` | Neutre au rôle **asymétrique** avec des règles de score spécifiques | ONG organisatrice (alliée de tous), Anonymous (ennemi de tous) |
+| Couleur  | Thème d'origine (« bal des nations ») |
+|----------|---------------------------------------|
+| `blue`   | Démocraties du monde libre (OTAN) |
+| `red`    | Puissances autoritaires |
 
-Il y a autant de `blue` que de `red`. Les neutres (`white` + `yellow`) sont la variable d'ajustement.
-Les neutres qui restent neutres forment ensemble une équipe pour le score.
+Les deux camps n'ont pas forcément autant de joueurs. Il n'y a plus de neutres (les anciens `white` et `yellow`
+ont été retirés).
+
+**Traîtres** : des traîtres se cachent parmi les joueurs, environ un tous les 4 ou 5 joueurs ; leur répartition
+entre les camps dépend de la configuration (dans `12-classic` : un `blue` et un `red`). Un traître est un **membre ordinaire de son camp**
+pour les alliés et les ennemis (même signe, même relations), mais il a **en plus des défis** et son score
+compte pour le **camp des traîtres**, pas pour celui de sa couleur. Le thème donne un nom au traître et à leur camp
+(`traitor.name` « Agent double », `traitor.team` « Agents doubles »).
 
 ### Ce que reçoit chaque joueur
 - **Un personnage** (ex. « France ») et son équipe.
 - **Un signe d'appel** : comportement à reproduire pendant la soirée pour être repéré par ses alliés.
   Les signes `blue` sont verbaux (tics de langage, mots qui riment avec « fromage »…),
-  les signes `red` sont gestuels (clin d'œil, se gratter le nez…),
-  les signes `yellow` sont des défis (« faire chanter un rouge », lancer un concours de blagues…).
-  Un `white` n'a pas de liste à lui : il tire **un signe bleu et un signe rouge**, et choisit ainsi
-  par quel camp il veut se faire reconnaître.
-- **Des indices** sur d'autres joueurs : « tu reconnaîtras le personnage X à son signe Y ».
+  les signes `red` sont gestuels (clin d'œil, se gratter le nez…).
+- Un traître reçoit en plus **des défis** : des actions discrètes à réussir pendant la soirée
+  (« accrocher un grelot à la porte », « cacher la souris dans une chaussure »…), tirées dans la liste `challenges`
+  du thème ; leur nombre est fixé par la configuration (`challenges`). Les défis sont tirés **une fois pour la partie**
+  (`Game.Challenges`) : tous les traîtres ont **les mêmes**. Les joueurs ne déclarent rien : à la fin, l'admin
+  **coche** sur la page admin les défis réalisés, **sans dire par qui** (`Game.SetChallengesDone`).
+- **Des indices** sur d'autres joueurs : « tu reconnaîtras un bleu à son signe Y ». Un indice donne la couleur
+  du joueur (badge) et son signe, mais **jamais son personnage**, qui sert de mot de passe, ni s'il est traître.
   Le graphe des indices (qui connaît le signe de qui) est défini par la configuration de partie.
-  Un indice sur un `white` donne son signe bleu à un `blue`, son signe rouge à un `red`, et ses deux signes
-  à un `white` ou un `yellow`.
 
 Il n'y a **pas de mot de passe** entre joueurs (trop compliqué en pratique) : les joueurs se reconnaissent aux signes
 et se dévoilent l'un à l'autre comme ils le souhaitent.
 
 ### Tirage
-L'admin saisit la liste des joueurs, choisit le thème et la configuration correspondant au nombre de joueurs,
-puis lance le tirage : les emplacements de la configuration sont attribués **aléatoirement** aux joueurs
-et les signes sont tirés **aléatoirement** dans les listes du thème (sans doublon).
+L'admin saisit la liste des joueurs, choisit le thème, puis lance le tirage. La configuration est **tirée au sort**
+parmi celles prévues pour ce nombre de joueurs (et que le thème peut habiller), avec une chance proportionnelle à
+leur poids (`weight`, 0 = jamais) : `config.Catalog.PickSetup`. Elle reste **secrète** jusqu'à la clôture (ni la page
+admin ni les règles ne la nomment, puisqu'elle dit combien il y a de traîtres) ; la page résultats la nomme.
+Les emplacements de la configuration sont ensuite attribués **aléatoirement** aux joueurs
+et les signes et défis sont tirés **aléatoirement** dans les listes du thème (sans doublon).
 Le tirage étant aléatoire, **l'admin peut jouer** comme les autres (contrairement à la version papier).
 
 ### Pendant la soirée
 Les joueurs observent, se reconnaissent, échangent leurs infos discrètement,
 et saisissent/modifient sur le site leurs suppositions : pour chaque autre joueur, **allié**, **ennemi** ou rien.
+Les traîtres tentent leurs défis sans rien déclarer sur le site.
 Un joueur surpris à parler du jeu peut être **dénoncé publiquement**.
 
 ### Fin de partie et score
-Un `white` choisit son camp (`blue`, `red` ou neutre) sur sa page et peut changer d'avis jusqu'à la clôture.
-Pour le score, il est alors **entièrement** considéré comme membre du camp choisi.
+Deux joueurs du même camp sont alliés ; deux joueurs de camps différents sont ennemis. Les traîtres ne font pas exception.
 
-Qui est allié de qui :
-- deux joueurs du même camp sont alliés ; deux joueurs de camps différents sont ennemis ;
-- un neutre resté neutre est donc un **ennemi** pour les `blue` et les `red`, et un allié pour les autres neutres ;
-- exceptions `yellow` : l'ONG est l'alliée de tout le monde, l'Anonymous est l'ennemi de tout le monde ;
-  entre les deux, « allié de tous » l'emporte (l'ONG et l'Anonymous sont alliés). La relation est toujours symétrique.
+L'admin clôture la saisie. Puis, pour chaque joueur (traîtres compris) :
+- +2 par allié désigné comme allié, +2 par ennemi désigné comme ennemi ;
+- 0 par erreur (allié désigné comme ennemi ou ennemi désigné comme allié) ;
+- +1 par joueur qui l'a désigné comme allié, −2 par joueur qui l'a désigné comme ennemi,
+  **que la supposition soit juste ou non** ;
+- les défis ne rapportent rien à un joueur en particulier : voir le camp des traîtres ci-dessous ;
+- points attribués manuellement par l'admin pendant l'affichage des résultats : dénonciations publiques, bonus divers.
 
-L'admin clôture la saisie. Puis, pour chaque joueur :
-- +1 par allié correctement identifié, +1 par ennemi correctement identifié ;
-- −1 par ennemi désigné comme allié, −1 par allié désigné comme ennemi ;
-- points attribués manuellement par l'admin pendant l'affichage des résultats :
-  défis réussis par les `yellow`, dénonciations publiques (−1 pour le dénoncé, +1 pour un neutre qui dénonce).
+Ce barème est regroupé en tête de `internal/game/score.go` ; il pourra être revu (il doit rester isolé et facile à modifier).
 
-Ce barème est celui de la V1 ; il pourra être revu ensuite (il doit donc rester isolé et facile à modifier).
-
-Score d'équipe = somme des scores des membres. Le score de l'équipe neutre est multiplié par `4/n` (n = nombre de neutres)
-pour compenser son désavantage.
-
-Règles spécifiques `yellow` (thème d'origine) :
-- **ONG** : alliée de tout le monde pour le décompte ; son score compte dans l'équipe neutre.
-- **Anonymous** : ennemi de tout le monde pour le décompte ; son score compte dans l'équipe neutre ;
-  il connaît les signes de beaucoup de joueurs (via les indices de la configuration).
-  Ses bonus éventuels (piéger un leader, etc.) sont attribués manuellement par l'admin en fin de partie.
-
-Les règles spéciales doivent être décrites dans la config (YAML), pas codées en dur par personnage : le code connaît des
-**types de règles** (ex. `ally_of_everyone`, `enemy_of_everyone`, `chooses_team`), le thème leur donne un nom et un texte.
+Score d'un camp = somme des scores de ses membres **qui ne sont pas traîtres** (si les camps n'ont pas autant
+de membres comptés, le plus nombreux est avantagé : à garder en tête en écrivant les configurations). Score du **camp des traîtres** = somme des scores des traîtres + 4 par défi réalisé (coché par l'admin une fois la partie
+clôturée, quel que soit le traître qui l'a fait). Les trois camps sont classés ensemble. Les scores peuvent être négatifs.
 
 ## Pages
 | Page | Accès | Contenu |
 |------|-------|---------|
 | Règles | public | Règles du jeu, rendues selon le thème |
 | Login | public | Connexion d'un joueur (voir ci-dessous) |
-| Mon rôle | joueur connecté, partie en cours | Personnage, équipe, signe, indices ; saisie/modification des suppositions ; choix de camp pour les `white` |
-| Résultats | tout le monde, **uniquement après clôture** | Rôles dévoilés, suppositions de chacun, scores par joueur et par équipe ; l'admin peut y ajouter des points (défis, dénonciations) |
-| Admin | admin | Liste des joueurs, choix du thème et de la configuration, tirage, clôture de la partie |
+| Mon rôle | joueur connecté, partie en cours | Personnage, équipe, signe, indices ; saisie/modification des suppositions ; pour un traître, ses défis (sans rien à déclarer) |
+| Résultats | tout le monde, **uniquement après clôture** | Rôles dévoilés, suppositions de chacun, scores par camp (traîtres compris) et par joueur ; défis des traîtres en lecture seule ; l'admin y ajoute des points (dénonciations) |
+| Admin | admin | Liste des joueurs, choix du thème (la configuration est tirée au sort, voir les chances), tirage, clôture de la partie ; après la clôture, cases à cocher des défis réalisés |
 
 **Authentification des joueurs** :
 - première connexion : le joueur donne son nom (choisi dans la liste saisie par l'admin) ; le site lui révèle le nom de son personnage ;
@@ -99,15 +95,15 @@ Les règles spéciales doivent être décrites dans la config (YAML), pas codée
   avec son seul nom). La page admin indique seulement qui s'est déjà connecté, jamais les rôles.
 
 **Règles** (`/rules`, lien dans l'en-tête de chaque page) : texte générique dans `rules.*` de la locale, habillé par
-le thème (récit `story`, noms et descriptions des camps, noms des rôles spéciaux). Thème affiché : `?theme=<id>`, sinon
-celui de la partie, sinon le premier. Après le tirage, la page liste les personnages en jeu par couleur, jamais qui les incarne.
+le thème (récit `story`, noms et descriptions des camps, nom des traîtres). Thème affiché : `?theme=<id>`, sinon
+celui de la partie, sinon le premier.
 
 **Résultats** (`/results`) : visibles par tous une fois la partie clôturée (avant, la page dit seulement d'attendre).
-Classement des camps (gagnant mis en avant, pondération des neutres affichée), classement des joueurs avec leur personnage
-et le détail de leurs suppositions (✓/✗), liste des points manuels. L'admin connecté y ajoute ou annule des points
+Classement des camps (gagnant mis en avant ; les couleurs sans leurs traîtres, puis le camp des traîtres), classement de tous les joueurs
+avec leur personnage et le détail de leurs points et suppositions (✓/✗), défis des traîtres, liste des points manuels. L'admin connecté y ajoute ou annule des points
 (entre −20 et +20 par entrée, avec une raison).
 
-**L'admin pouvant jouer**, la page admin ne doit jamais afficher l'attribution des rôles, les signes
+**L'admin pouvant jouer**, la page admin ne doit jamais afficher l'attribution des rôles, les signes, les défis
 ni les suppositions avant la clôture. L'admin est authentifié séparément (mot de passe passé au lancement du serveur).
 Les pages sont pensées **mobile d'abord** : les joueurs utilisent leur téléphone pendant la soirée.
 
@@ -121,18 +117,18 @@ internal/server/    handlers HTTP, sessions, rendu des templates
 web/                package Go qui embarque (embed) les templates et les assets
 web/templates/      templates html/template : layout.html + une page par fichier dans pages/
 web/static/         CSS (et JS minimal si vraiment nécessaire)
-themes/<id>/theme.yaml   un thème : noms des camps, personnages, listes de signes (format commenté dans le fichier)
-setups/<id>.yaml         une configuration de partie : emplacements, règles jaunes, graphe des indices
+themes/<id>/theme.yaml   un thème : noms des camps, personnages, listes de signes et défis (format commenté dans le fichier)
+setups/<id>.yaml         une configuration de partie : emplacements, traîtres, nombre de défis, graphe des indices
 locales/<lang>.yaml      textes de l'interface (fr.yaml d'abord)
 content.go               package racine qui embarque themes/, setups/ et locales/
 old-game-drafts/    brouillons historiques, ignorés par git, simple source d'inspiration
 ```
 
 Séparation importante :
-- une **configuration** (`setups/`) est indépendante du thème : elle parle de `blue-1`, `red-2`, `white-1`, `yellow-1`…
-  et décrit les indices (qui connaît le signe de qui) ;
+- une **configuration** (`setups/`) est indépendante du thème : elle parle de `blue-1`, `red-2`…,
+  marque les traîtres et décrit les indices (qui connaît le signe de qui) ;
 - une configuration correspond à **un nombre exact de joueurs** : pour couvrir plusieurs tailles, on duplique
-  la configuration en retirant des neutres, plutôt que de gérer des rôles optionnels ;
+  la configuration plutôt que de gérer des rôles optionnels ;
 - un **thème** (`themes/`) associe chaque emplacement à un personnage et fournit les listes de signes par couleur.
   Ajouter un thème (Noël : lutins vs disciples du père Fouettard ; Halloween : sorciers vs fantômes) ne doit demander
   **aucune modification de code**.
@@ -164,7 +160,7 @@ rendu dans `layout.html` via `Server.render(w, status, "<nom>", data)`.
 Tout texte d'interface passe par `{{t "cle.sous_cle"}}` ; une clé absente de la locale fait échouer le rendu.
 
 Logique de jeu (`internal/game`) : `Game` est un état autonome sérialisable en JSON. Au tirage, chaque joueur
-reçoit une copie de son emplacement, personnage, signes et indices : la partie reste cohérente même si les YAML changent.
+reçoit une copie de son emplacement, personnage, signes, défis et indices : la partie reste cohérente même si les YAML changent.
 Phases `setup` → `running` → `closed` (`CancelDraw` permet de revenir à `setup` pour corriger la liste des joueurs).
 Le barème est regroupé en tête de `internal/game/score.go`. Le tirage reçoit un `*rand.Rand` (reproductible en test).
 `Game` n'est pas protégé contre les accès concurrents : c'est le rôle de l'appelant.
@@ -187,14 +183,17 @@ ignoré par git). Toujours passer par `Store.Read` / `Store.Update` : `Update` t
 (fichier temporaire puis renommage) et ne la rend visible que si tout a réussi. Un fichier illisible bloque le démarrage
 au lieu d'être écrasé ; supprimer `data/game.json` repart d'une partie vierge.
 
-Correspondance thème ↔ configuration : l'emplacement `<couleur>-N` reçoit le N-ième personnage de sa couleur ;
-un emplacement jaune reçoit le premier personnage jaune libre ayant la même `rule`.
-Dans les signes, `{blue}`, `{red}` et `{neutral}` sont remplacés par le `member` du camp correspondant.
+Correspondance thème ↔ configuration : l'emplacement `<couleur>-N` reçoit le N-ième personnage de sa couleur
+(qu'il soit traître ou non).
+Dans les signes et les défis, `{blue}` et `{red}` sont remplacés par le `member` du camp correspondant.
 
 ## Feuille de route
 1. **V1** : thème « bal des nations » et une configuration à **12 joueurs**
    (4 `blue`, 4 `red`, 2 `white`, ONG, Anonymous, d'après `12/11/10-44211-0` des brouillons) ; toutes les pages ci-dessus.
-2. Configurations équilibrées pour tout nombre de joueurs de 6 à 24 (éventuellement générées).
+   Depuis, les neutres (`white`, `yellow`) ont été remplacés par des traîtres dans chaque camp :
+   `setups/12-classic.yaml` a deux camps de 6 avec un traître chacun. Configurations existantes : 8, 9, 10, 11 (deux), 12 et 13 joueurs.
+2. Configurations équilibrées pour tout nombre de joueurs de 6 à 24 (éventuellement générées), plusieurs par
+   taille avec des poids pour varier les parties. Les camps peuvent être inégaux (nombres impairs de joueurs).
 3. Autres thèmes, autres langues.
 
 ### Étapes de la V1

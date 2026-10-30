@@ -43,10 +43,10 @@
         <select id="theme" name="theme">
             {{range .Themes}}<option value="{{.ID}}"{{if eq .ID $.SelectedTheme}} selected{{end}}>{{.Name}}</option>{{end}}
         </select>
-        <label for="setup">{{t "admin.draw.setup"}}</label>
-        <select id="setup" name="setup">
-            {{range .Setups}}<option value="{{.ID}}">{{.Name}}</option>{{end}}
-        </select>
+        <p class="muted">{{t "admin.draw.setups"}}</p>
+        <ul class="setups">
+            {{range .Setups}}<li>{{.Name}} <span class="muted">{{tf "admin.draw.chance" .Percent}}</span></li>{{end}}
+        </ul>
         <button type="submit">{{t "admin.draw.submit"}}</button>
     </form>
     {{else}}
@@ -61,7 +61,7 @@
 {{if eq .Phase "running"}}
 <section class="card">
     <h2>{{t "admin.running.title"}}</h2>
-    <p>{{.ThemeName}} · {{.SetupName}}</p>
+    <p>{{.ThemeName}}</p>
     <p class="muted">{{t "admin.running.help"}}</p>
     <form method="post" action="/admin/close" onsubmit="return confirm({{t "admin.running.close_confirm"}})">
         <button type="submit">{{t "admin.running.close"}}</button>
@@ -101,6 +101,26 @@
     <p class="muted">{{t "admin.closed.help"}}</p>
     <a class="button" href="/results">{{t "admin.closed.results"}}</a>
 </section>
+
+{{if .Challenges}}
+<section class="card" id="challenges">
+    <h2>{{t "admin.challenges.title"}}</h2>
+    <p class="muted">{{tf "admin.challenges.help" .PointsChallenge}}</p>
+    <form method="post" action="/admin/challenges" class="stack">
+        <ul class="rows challenges">
+            {{range .Challenges}}
+            <li>
+                <label class="radio-row">
+                    <input type="checkbox" name="done" value="{{.Index}}"{{if .Done}} checked{{end}}>
+                    <span>{{.Text}}</span>
+                </label>
+            </li>
+            {{end}}
+        </ul>
+        <button type="submit">{{t "admin.challenges.submit"}}</button>
+    </form>
+</section>
+{{end}}
 {{end}}
 
 <section class="card">

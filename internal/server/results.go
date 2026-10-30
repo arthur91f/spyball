@@ -27,23 +27,25 @@ type resultsPage struct {
 	IsAdmin bool
 	Error   string
 
-	Teams   []teamResult
-	Players []playerResult
-	Manual  []manualResult
+	SetupName   string // the drawn setup, kept secret until the game is closed
+	Teams       []teamResult
+	TraitorName string         // themed name of a traitor
+	Players     []playerResult // everyone, traitors included
+	Challenges  []challengeResult
+	Manual      []manualResult
 
-	NeutralFactor int
-	Options       []adminPlayer // admin form: who gets points
+	Points  pointsHelp
+	Options []adminPlayer // admin form: who gets points
 }
 
 type teamResult struct {
-	Camp     config.Camp
-	Name     string
-	Members  int
-	Sum      int
-	Score    string // formatted, weighted for the neutral team
-	Weighted bool
-	Winner   bool
-	score    float64
+	Color      config.Color // empty for the traitors' camp
+	Traitors   bool
+	Name       string
+	Members    int
+	Challenges int // traitors' camp only: challenges done
+	Score      int
+	Winner     bool
 }
 
 type playerResult struct {
@@ -51,14 +53,17 @@ type playerResult struct {
 	Name      string
 	Character string
 	Color     config.Color
-	Rule      config.Rule
-	Camp      config.Camp
-	CampName  string
-	Right     int
-	Wrong     int
-	Manual    string // signed, empty when zero
-	Total     int
-	Guesses   []guessResult
+	TeamName  string
+	Traitor   bool
+
+	AlliesFound     int
+	EnemiesFound    int
+	Wrong           int
+	DesignatedAlly  int
+	DesignatedEnemy int
+	Manual          string // signed, empty when zero
+	Total           int
+	Guesses         []guessResult
 }
 
 type guessResult struct {
@@ -75,7 +80,7 @@ type manualResult struct {
 }
 
 func (s *Server) resultsPage(r *http.Request, errMsg string) (resultsPage, error) {
-	page := resultsPage{IsAdmin: s.isAdmin(r), Error: errMsg, NeutralFactor: game.NeutralTeamFactor}
+	page := resultsPage{IsAdmin: s.isAdmin(r), Error: errMsg, Points: points}
 	err := s.store.Read(func(g *game.Game) error {
 		page.Closed = g.Phase == game.PhaseClosed
 		if !page.Closed {
@@ -87,25 +92,33 @@ func (s *Server) resultsPage(r *http.Request, errMsg string) (resultsPage, error
 		}
 		res := g.Score()
 
-		best := 0.0
+		page.TraitorName = theme.Traitor.Name
+		if setup := s.catalog.Setups[g.SetupID]; setup != nil {
+			page.SetupName = setup.Name
+		}
+
+		best := 0
 		for i, t := range res.Teams {
 			if i == 0 || t.Score > best {
 				best = t.Score
 			}
 		}
 		for _, t := range res.Teams {
-			page.Teams = append(page.Teams, teamResult{
-				Camp:     t.Camp,
-				Name:     theme.Teams[t.Camp].Name,
-				Members:  t.Members,
-				Sum:      t.Sum,
-				Score:    s.formatScore(t.Score),
-				Weighted: t.Camp == config.CampNeutral,
-				Winner:   t.Score == best,
-				score:    t.Score,
-			})
+			tr := teamResult{
+				Color:      t.Color,
+				Traitors:   t.Traitors,
+				Name:       theme.Teams[t.Color].Name,
+				Members:    t.Members,
+				Challenges: t.Challenges,
+				Score:      t.Score,
+				Winner:     t.Score == best,
+			}
+			if t.Traitors {
+				tr.Name = theme.Traitor.Team
+			}
+			page.Teams = append(page.Teams, tr)
 		}
-		slices.SortStableFunc(page.Teams, func(a, b teamResult) int { return cmp.Compare(b.score, a.score) })
+		slices.SortStableFunc(page.Teams, func(a, b teamResult) int { return cmp.Compare(b.Score, a.Score) })
 
 		for _, ps := range res.Players {
 			p, err := g.Player(ps.Player)
@@ -113,15 +126,17 @@ func (s *Server) resultsPage(r *http.Request, errMsg string) (resultsPage, error
 				return err
 			}
 			pr := playerResult{
-				Name:      p.Name,
-				Character: p.Character,
-				Color:     p.Color,
-				Rule:      p.Rule,
-				Camp:      ps.Camp,
-				CampName:  theme.Teams[ps.Camp].Name,
-				Right:     ps.Right,
-				Wrong:     ps.Wrong,
-				Total:     ps.Total,
+				Name:            p.Name,
+				Character:       p.Character,
+				Color:           p.Color,
+				TeamName:        theme.Teams[p.Color].Name,
+				Traitor:         p.Traitor,
+				AlliesFound:     ps.AlliesFound,
+				EnemiesFound:    ps.EnemiesFound,
+				Wrong:           ps.Wrong,
+				DesignatedAlly:  ps.DesignatedAlly,
+				DesignatedEnemy: ps.DesignatedEnemy,
+				Total:           ps.Total,
 			}
 			if ps.Manual != 0 {
 				pr.Manual = fmt.Sprintf("%+d", ps.Manual)
@@ -136,18 +151,12 @@ func (s *Server) resultsPage(r *http.Request, errMsg string) (resultsPage, error
 			page.Players = append(page.Players, pr)
 			page.Options = append(page.Options, adminPlayer{ID: p.ID, Name: p.Name})
 		}
-		slices.SortStableFunc(page.Players, func(a, b playerResult) int {
-			return cmp.Or(cmp.Compare(b.Total, a.Total), cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name)))
-		})
-		for i := range page.Players {
-			page.Players[i].Rank = i + 1
-			if i > 0 && page.Players[i].Total == page.Players[i-1].Total {
-				page.Players[i].Rank = page.Players[i-1].Rank // ties share their rank
-			}
-		}
+		rank(page.Players)
 		slices.SortFunc(page.Options, func(a, b adminPlayer) int {
 			return cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name))
 		})
+
+		page.Challenges = challengeResults(g)
 
 		for i, mp := range g.ManualPoints {
 			p, err := g.Player(mp.Player)
@@ -161,14 +170,17 @@ func (s *Server) resultsPage(r *http.Request, errMsg string) (resultsPage, error
 	return page, err
 }
 
-// formatScore shows one decimal only when needed, with the locale's decimal separator.
-func (s *Server) formatScore(score float64) string {
-	text := strconv.FormatFloat(score, 'f', 1, 64)
-	text = strings.TrimSuffix(text, ".0")
-	if sep, err := s.locale.T("format.decimal_separator"); err == nil {
-		text = strings.Replace(text, ".", sep, 1)
+// rank sorts players by total, then name, and numbers them; ties share their rank.
+func rank(players []playerResult) {
+	slices.SortStableFunc(players, func(a, b playerResult) int {
+		return cmp.Or(cmp.Compare(b.Total, a.Total), cmp.Compare(strings.ToLower(a.Name), strings.ToLower(b.Name)))
+	})
+	for i := range players {
+		players[i].Rank = i + 1
+		if i > 0 && players[i].Total == players[i-1].Total {
+			players[i].Rank = players[i-1].Rank
+		}
 	}
-	return text
 }
 
 func (s *Server) renderResults(w http.ResponseWriter, r *http.Request, status int, errMsg string) {

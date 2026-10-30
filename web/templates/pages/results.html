@@ -10,23 +10,24 @@
 {{else}}
 
 {{with .Error}}<p class="alert" role="alert">{{.}}</p>{{end}}
+{{with .SetupName}}<p class="muted">{{tf "results.setup" .}}</p>{{end}}
 
 <section class="card">
     <h2>{{t "results.teams.title"}}</h2>
     <ol class="ranking">
         {{range .Teams}}
-        <li class="team-{{.Camp}}{{if .Winner}} winner{{end}}">
-            <span class="badge team-{{.Camp}}">{{.Name}}</span>
+        {{$team := .Color}}{{if .Traitors}}{{$team = "traitors"}}{{end}}
+        <li class="team-{{$team}}{{if .Winner}} winner{{end}}">
+            <span class="badge team-{{$team}}">{{.Name}}</span>
             <span class="score">{{.Score}}&nbsp;{{t "results.points"}}</span>
-            <small class="muted">
-                {{tf "results.teams.members" .Members}}
-                {{if .Weighted}} · {{tf "results.teams.weighted" .Sum $.NeutralFactor .Members}}{{end}}
-            </small>
+            {{if .Traitors}}<small class="muted">{{tf "results.teams.traitors" .Members .Challenges}}</small>
+            {{else}}<small class="muted">{{tf "results.teams.members" .Members}}</small>{{end}}
             {{if .Winner}}<strong class="winner-label">{{t "results.teams.winner"}}</strong>{{end}}
         </li>
         {{end}}
     </ol>
 </section>
+
 
 <section class="card">
     <h2>{{t "results.players.title"}}</h2>
@@ -39,15 +40,15 @@
                     <span class="rank">{{.Rank}}</span>
                     <span class="who">
                         <strong>{{.Name}}</strong> · {{.Character}}<br>
-                        <small class="camp team-{{.Camp}}">{{.CampName}}</small>
-                        {{if and (eq .Color "white") (ne .Camp "neutral")}}<small class="muted">{{t "results.players.white"}}</small>{{end}}
-                        {{if eq .Rule "ally_of_everyone"}}<small class="muted">{{t "results.players.ally_of_everyone"}}</small>{{end}}
-                        {{if eq .Rule "enemy_of_everyone"}}<small class="muted">{{t "results.players.enemy_of_everyone"}}</small>{{end}}
+                        <small class="camp team-{{.Color}}">{{.TeamName}}</small>
+                        {{if .Traitor}}<span class="badge traitor">{{$.TraitorName}}</span>{{end}}
                     </span>
                     <span class="score">{{.Total}}</span>
                 </summary>
                 <p class="muted">
-                    {{tf "results.players.right" .Right}} · {{tf "results.players.wrong" .Wrong}}
+                    {{tf "results.players.allies_found" .AlliesFound}} · {{tf "results.players.enemies_found" .EnemiesFound}}
+                    · {{tf "results.players.wrong" .Wrong}}
+                    · {{tf "results.players.designated_ally" .DesignatedAlly}} · {{tf "results.players.designated_enemy" .DesignatedEnemy}}
                     {{with .Manual}} · {{tf "results.players.manual" .}}{{end}}
                 </p>
                 {{if .Guesses}}
@@ -69,6 +70,23 @@
         {{end}}
     </ol>
 </section>
+
+{{if .Challenges}}
+<section class="card" id="challenges">
+    <h2>{{t "results.challenges.title"}}</h2>
+    <p class="muted">{{tf "results.challenges.help" .Points.Challenge}}</p>
+    {{if .IsAdmin}}<p><a href="/admin#challenges">{{t "results.challenges.review_link"}}</a></p>{{end}}
+    <ul class="rows challenges">
+        {{range .Challenges}}
+        <li class="challenge-group">
+            « {{.Text}} »
+            {{if .Done}}<strong class="status validated">{{t "results.challenges.done"}}</strong>
+            {{else}}<small class="muted">{{t "results.challenges.not_done"}}</small>{{end}}
+        </li>
+        {{end}}
+    </ul>
+</section>
+{{end}}
 
 <section class="card" id="manual">
     <h2>{{t "results.manual.title"}}</h2>
@@ -102,7 +120,6 @@
         <label for="reason">{{t "results.manual.reason"}}</label>
         <input id="reason" name="reason" type="text" list="reasons" autocomplete="off">
         <datalist id="reasons">
-            <option value="{{t "results.manual.reasons.challenge"}}">
             <option value="{{t "results.manual.reasons.denounced"}}">
             <option value="{{t "results.manual.reasons.denouncer"}}">
         </datalist>
@@ -112,3 +129,4 @@
 </section>
 {{end}}
 {{end}}
+

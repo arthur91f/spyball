@@ -1,0 +1,108 @@
+# Thème Halloween : la nuit où s'ouvre le passage entre le monde réel et celui des esprits.
+# Format commenté dans themes/ball-of-nations/theme.yaml. Les signes sont ceux du thème d'origine.
+
+name: La nuit des esprits
+story: >-
+  Le soir d'Halloween, un passage s'ouvre entre le monde réel et celui des esprits. Les sorciers et sorcières
+  païens profitent de cette nuit pour invoquer les esprits et les forces infernales. Mais sorciers et êtres
+  d'outre-monde doivent se reconnaître pour regagner chacun leur monde avant la fin de ce cycle.
+
+  Attention : des fanatiques, embrumés par l'obscurantisme de l'Église, se sont glissés parmi vous et cherchent
+  à saboter cette nuit en exécutant des rites d'exorcisme ! Pauvres fous ! Ils ne feront qu'empêcher le retour
+  des différents êtres dans leur monde.
+
+teams:
+  blue:
+    name: Cultistes païens
+    member: cultiste
+    description: >-
+      Sorciers et sorcières se reconnaissent par la parole : traquez les tics de langage
+      et les drôles de façons de s'exprimer.
+  red:
+    name: Esprits et êtres infernaux
+    member: esprit
+    description: >-
+      Venus de l'outre-monde, ils communiquent par gestes :
+      soyez attentifs aux postures, mimiques et manies étranges.
+
+traitor:
+  name: Exorciste
+  team: Exorcistes
+  description: >-
+    Tu fais semblant de jouer le jeu, mais tu es là pour exorciser cette maison.
+    Exécute tes rites sans te faire repérer.
+
+characters:
+  blue:
+    - name: Morgane
+    - name: Merlin
+    - name: Circé
+    - name: Hécate
+    - name: Cassandre
+    - name: Baba Yaga
+    - name: Mélusine
+    - name: Christ Cosmique
+    - name: Halliwell
+    - name: Salem
+    - name: Sabrina
+    - name: Nostradamus
+  red:
+    - name: Casper
+    - name: Monster Munch
+    - name: Fantominus
+    - name: Ankou
+    - name: Dame Blanche
+    - name: Banshee
+    - name: Belzébuth
+    - name: Slenderman
+    - name: Dracula
+    - name: It
+    - name: Peeves
+      
+signs:
+  blue:
+    - utiliser des sigles
+    - utiliser des onomatopées
+    - dire tout le temps « euh »
+    - chanter ou fredonner un air connu
+    - faire des bruits de bouche (siffler…)
+    - utiliser des anglicismes
+    - être grossier, jurer
+    - raconter des anecdotes
+    - dire « canopé » au lieu de « canapé » et « roser » au lieu de « poser »
+    - dire « père » au lieu de « verre » et « boire » au lieu de « voir »
+    - utiliser des mots qui riment avec « tristitude »
+    - utiliser des mots qui riment avec « fromage »
+    - commencer ses phrases par « en vrai »
+  red:
+    - s'exprimer en mimant
+    - avoir les mains sur les hanches
+    - faire tomber et ramasser quelque chose
+    - faire des clins d'œil
+    - faire des sourires en coin
+    - se gratter le nez
+    - se gratter la tête, se recoiffer
+    - s'étirer les doigts, les mains
+    - hausser les sourcils ou les épaules
+    - éteindre ou allumer la lumière « par erreur »
+    - croiser les bras
+    - lever le petit doigt en buvant
+    - se moucher
+    - faire des checks de plus de deux mouvements
+    - regarder l'heure ostensiblement
+    - tapoter du pied en rythme
+
+# Rites d'exorcisme des fanatiques : à adapter au lieu de la soirée.
+challenges:
+  - poser 2 cure-dents en croix sur la table
+  - poser une pincé de sel sur la table
+  - corner la page 404 "enfer" du dictionnaire des symboles
+  - déplacer les BDs Snoopy sur l'étagère du bas
+  - accrocher un grelot à la porte
+  - allumer la lumière de la hotte
+  - mettre un pins dans un pot du balcon
+  - trier les bouteilles d'alcool sur la table par ordre alphabétique
+  - coincoin doit retrouver coincouine
+  - mettre une pince à linge dans le dos de quelqu'un
+  - cacher la souris dans une chaussure
+

@@ -10,7 +10,7 @@ import (
 
 func TestRulesPage(t *testing.T) {
 	c := newTestClient(t)
-	resp, body := c.get("/rules")
+	resp, body := c.get("/rules?theme=ball-of-nations")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("status %d", resp.StatusCode)
 	}
@@ -19,10 +19,12 @@ func TestRulesPage(t *testing.T) {
 		"ONG P.L.S. (Pour La Santé)", // story
 		"Démocraties du monde libre",
 		"Puissances autoritaires",
-		"Non-alignés",
-		"ONG P.L.S. : allié de tout le monde",
-		"Anonymous : ennemi de tout le monde",
-		"multiplié par 4 divisé par leur nombre",
+		"Agent double",
+		"un tous les 4 ou 5 joueurs",
+		"2 points par allié que tu désignes comme allié",
+		"-2 points par joueur qui te désigne comme ennemi, qu'il ait raison ou non",
+		"4 points par défi réalisé, pour le camp des traîtres",
+		"sans ses traîtres",
 	} {
 		if !strings.Contains(body, htmlEscape(want)) {
 			t.Errorf("rules page lacks %q", want)
@@ -31,26 +33,24 @@ func TestRulesPage(t *testing.T) {
 	if !strings.Contains(body, `<nav><a href="/rules">`) {
 		t.Error("no rules link in the header")
 	}
-	if strings.Contains(body, "Les personnages de cette partie") {
-		t.Error("cast shown before the draw")
-	}
-	if strings.Contains(body, `name="theme"`) {
-		t.Error("theme picker shown with a single theme")
+	if !strings.Contains(body, `<option value="halloween">La nuit des esprits</option>`) {
+		t.Error("theme picker does not offer the other themes")
 	}
 }
 
-func TestRulesListCharactersInPlayButNotPlayers(t *testing.T) {
+func TestRulesShowNeitherCastNorSetup(t *testing.T) {
 	admin := startedGame(t)
 	_, body := admin.newPlayerClient().get("/rules")
-	if !strings.Contains(body, "Les personnages de cette partie") {
-		t.Fatal("cast not shown after the draw")
+	for _, s := range admin.srv.catalog.Setups {
+		if strings.Contains(body, htmlEscape(s.Name)) {
+			t.Errorf("rules page reveals the setup %q", s.Name)
+		}
 	}
 	for _, p := range admin.game().Players {
-		if !strings.Contains(body, htmlEscape(p.Character)) {
-			t.Errorf("character %s not listed", p.Character)
-		}
-		if strings.Contains(body, htmlEscape(p.Name)) {
-			t.Errorf("rules page shows player name %s", p.Name)
+		for _, secret := range []string{p.Name, p.Character} {
+			if strings.Contains(body, htmlEscape(secret)) {
+				t.Errorf("rules page shows %q", secret)
+			}
 		}
 	}
 }
@@ -59,10 +59,9 @@ func TestRulesThemeChoice(t *testing.T) {
 	c := newTestClient(t)
 	other := *c.srv.catalog.Themes["ball-of-nations"]
 	other.ID, other.Name = "other", "Autre thème"
-	other.Teams = map[config.Camp]config.Team{
-		config.CampBlue:    {Name: "Lutins", Member: "lutin"},
-		config.CampRed:     {Name: "Disciples du père Fouettard", Member: "disciple"},
-		config.CampNeutral: {Name: "Rennes", Member: "renne"},
+	other.Teams = map[config.Color]config.Team{
+		config.Blue: {Name: "Lutins", Member: "lutin"},
+		config.Red:  {Name: "Disciples du père Fouettard", Member: "disciple"},
 	}
 	c.srv.catalog.Themes["other"] = &other
 
