@@ -108,13 +108,13 @@ func TestScore(t *testing.T) {
 	res := g.Score()
 
 	wantPlayers := map[PlayerID]PlayerScore{
-		// 2 + 2 + 0 (wrong) + 1 (designated ally) − 2 (designated enemy); challenges score for the traitors' camp
-		"b1": {Player: "b1", Color: config.Blue, Traitor: true, AlliesFound: 1, EnemiesFound: 1, Wrong: 1, DesignatedAlly: 1, DesignatedEnemy: 1, Total: 3},
-		"b2": {Player: "b2", Color: config.Blue, AlliesFound: 1, Wrong: 1, DesignatedAlly: 1, DesignatedEnemy: 1, Total: 1},
-		"b3": {Player: "b3", Color: config.Blue, DesignatedEnemy: 1, Manual: -1, Total: -3}, // scores can be negative
-		"r1": {Player: "r1", Color: config.Red, AlliesFound: 1, EnemiesFound: 1, DesignatedAlly: 1, DesignatedEnemy: 1, Total: 3},
-		"r2": {Player: "r2", Color: config.Red, Traitor: true, EnemiesFound: 1, DesignatedAlly: 1, Total: 3},
-		"r3": {Player: "r3", Color: config.Red, AlliesFound: 1, DesignatedAlly: 1, Total: 3},
+		// 2 + 2 − 2 (wrong) + 3 (designated ally) − 5 (designated enemy); challenges score for the traitors' camp
+		"b1": {Player: "b1", Color: config.Blue, Traitor: true, AlliesFound: 1, EnemiesFound: 1, Wrong: 1, DesignatedAlly: 1, DesignatedEnemy: 1, Total: 0},
+		"b2": {Player: "b2", Color: config.Blue, AlliesFound: 1, Wrong: 1, DesignatedAlly: 1, DesignatedEnemy: 1, Total: -2},
+		"b3": {Player: "b3", Color: config.Blue, DesignatedEnemy: 1, Manual: -1, Total: -6}, // scores can be negative
+		"r1": {Player: "r1", Color: config.Red, AlliesFound: 1, EnemiesFound: 1, DesignatedAlly: 1, DesignatedEnemy: 1, Total: 2},
+		"r2": {Player: "r2", Color: config.Red, Traitor: true, EnemiesFound: 1, DesignatedAlly: 1, Total: 5},
+		"r3": {Player: "r3", Color: config.Red, AlliesFound: 1, DesignatedAlly: 1, Total: 5},
 	}
 	if len(res.Players) != len(wantPlayers) {
 		t.Fatalf("%d player scores, want %d", len(res.Players), len(wantPlayers))
@@ -129,9 +129,9 @@ func TestScore(t *testing.T) {
 	}
 
 	wantTeams := []TeamScore{
-		{Color: config.Blue, Members: 2, Score: -2}, // traitors do not count for their color
-		{Color: config.Red, Members: 2, Score: 6},
-		{Traitors: true, Members: 2, Challenges: 1, Score: 3 + 3 + PointsChallenge}, // traitors and challenges done
+		{Color: config.Blue, Members: 2, Score: -8}, // traitors do not count for their color
+		{Color: config.Red, Members: 2, Score: 7},
+		{Traitors: true, Members: 2, Challenges: 1, Score: 0 + 5 + PointsChallenge}, // traitors and challenges done
 	}
 	if !slices.Equal(res.Teams, wantTeams) {
 		t.Errorf("teams = %+v, want %+v", res.Teams, wantTeams)
