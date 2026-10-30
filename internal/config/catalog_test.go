@@ -184,7 +184,7 @@ func TestLoadRejectsInvalidThemes(t *testing.T) {
 		{"duplicate challenge", func(s string) string {
 			return strings.Replace(s, `"faire chanter un {blue}"`, `"faire rire un rouge"`, 1)
 		}, "duplicate challenge"},
-		{"unknown rules text", func(s string) string { return s + "rules:\n  camps:\n    balanse: x\n" }, `rules: unknown text "rules.camps.balanse"`},
+		{"unknown text", func(s string) string { return s + "texts:\n  rules:\n    camps:\n      balanse: x\n" }, `texts: unknown text "rules.camps.balanse"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

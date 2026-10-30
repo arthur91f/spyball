@@ -66,16 +66,16 @@ func Load(fsys fs.FS) (*Catalog, error) {
 		}
 	}
 
-	// A theme may only replace rules texts that exist, to catch typos in its keys.
+	// A theme may only replace texts that exist, to catch typos in its keys.
 	for id, theme := range c.Themes {
 		if theme == nil {
 			continue
 		}
-		for key := range theme.Rules {
+		for key := range theme.Texts {
 			for _, l := range c.Locales {
 				if l != nil {
 					if _, err := l.T(key); err != nil {
-						errs = append(errs, fmt.Errorf("themes/%s/theme.yaml: rules: unknown text %q", id, key))
+						errs = append(errs, fmt.Errorf("themes/%s/theme.yaml: texts: unknown text %q", id, key))
 					}
 				}
 			}
