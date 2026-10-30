@@ -16,10 +16,10 @@
     <p class="muted">{{tf "role.you_are" .Name}}</p>
     <h2 class="character">{{.Character}}</h2>
     <p><span class="badge team-{{.Color}}">{{.TeamName}}</span>{{with .Traitor}} <span class="badge traitor">{{.Name}}</span>{{end}}</p>
-    {{with .Description}}<p>{{.}}</p>{{end}}
-    {{with .TeamHelp}}<p class="muted">{{.}}</p>{{end}}
+    {{with .Description}}<p>{{rich .}}</p>{{end}}
+    {{with .TeamHelp}}<p class="muted">{{rich .}}</p>{{end}}
     {{with .Traitor}}
-    {{with .Description}}<p>{{.}}</p>{{end}}
+    {{with .Description}}<p>{{rich .}}</p>{{end}}
     <p class="muted">{{t "role.traitor_help"}}</p>
     {{end}}
 </section>

@@ -15,57 +15,57 @@
 
 <section class="card">
     <h2>{{.Theme.Name}}</h2>
-    {{with .Theme.Story}}<p class="story">{{.}}</p>{{end}}
-    <p>{{t "rules.goal"}}</p>
+    {{with .Theme.Story}}<p class="story">{{rich .}}</p>{{end}}
+    <p>{{rule $.Theme "rules.goal"}}</p>
 </section>
 
 <section class="card">
-    <h2>{{t "rules.camps.title"}}</h2>
+    <h2>{{rule $.Theme "rules.camps.title"}}</h2>
     <ul class="camps">
-        <li class="team-blue"><span class="badge team-blue">{{.Blue.Name}}</span> {{.Blue.Description}}</li>
-        <li class="team-red"><span class="badge team-red">{{.Red.Name}}</span> {{.Red.Description}}</li>
+        <li class="team-blue"><span class="badge team-blue">{{.Blue.Name}}</span> {{rich .Blue.Description}}</li>
+        <li class="team-red"><span class="badge team-red">{{.Red.Name}}</span> {{rich .Red.Description}}</li>
     </ul>
-    <p>{{t "rules.camps.balance"}}</p>
+    <p>{{rule $.Theme "rules.camps.balance"}}</p>
     <h3><span class="badge traitor">{{.Traitor.Name}}</span></h3>
-    <p>{{t "rules.camps.traitors"}}</p>
+    <p>{{rule $.Theme "rules.camps.traitors"}}</p>
 </section>
 
 <section class="card">
-    <h2>{{t "rules.role.title"}}</h2>
+    <h2>{{rule $.Theme "rules.role.title"}}</h2>
     <ul>
-        <li>{{t "rules.role.character"}}</li>
-        <li>{{t "rules.role.sign"}}</li>
-        <li>{{t "rules.role.clues"}}</li>
-        <li>{{t "rules.role.challenges"}}</li>
+        <li>{{rule $.Theme "rules.role.character"}}</li>
+        <li>{{rule $.Theme "rules.role.sign"}}</li>
+        <li>{{rule $.Theme "rules.role.clues"}}</li>
+        <li>{{rule $.Theme "rules.role.challenges"}}</li>
     </ul>
-    <p>{{t "rules.role.login"}}</p>
+    <p>{{rule $.Theme "rules.role.login"}}</p>
 </section>
 
 <section class="card">
-    <h2>{{t "rules.party.title"}}</h2>
+    <h2>{{rule $.Theme "rules.party.title"}}</h2>
     <ul>
-        <li>{{t "rules.party.observe"}}</li>
-        <li>{{t "rules.party.reveal"}}</li>
-        <li>{{t "rules.party.discretion"}}</li>
-        <li>{{t "rules.party.guesses"}}</li>
+        <li>{{rule $.Theme "rules.party.observe"}}</li>
+        <li>{{rule $.Theme "rules.party.reveal"}}</li>
+        <li>{{rule $.Theme "rules.party.discretion"}}</li>
+        <li>{{rule $.Theme "rules.party.guesses"}}</li>
     </ul>
 </section>
 
 <section class="card">
-    <h2>{{t "rules.score.title"}}</h2>
+    <h2>{{rule $.Theme "rules.score.title"}}</h2>
     {{with .Points}}
     <ul>
-        <li>{{tf "rules.score.ally_found" .AllyFound}}</li>
-        <li>{{tf "rules.score.enemy_found" .EnemyFound}}</li>
-        <li>{{tf "rules.score.wrong" .Wrong}}</li>
-        <li>{{tf "rules.score.designated_ally" .DesignatedAlly}}</li>
-        <li>{{tf "rules.score.designated_enemy" .DesignatedEnemy}}</li>
-        <li>{{tf "rules.score.challenges" .Challenge}}</li>
-        <li>{{t "rules.score.manual"}}</li>
+        <li>{{rule $.Theme "rules.score.ally_found" .AllyFound}}</li>
+        <li>{{rule $.Theme "rules.score.enemy_found" .EnemyFound}}</li>
+        <li>{{rule $.Theme "rules.score.wrong" .Wrong}}</li>
+        <li>{{rule $.Theme "rules.score.designated_ally" .DesignatedAlly}}</li>
+        <li>{{rule $.Theme "rules.score.designated_enemy" .DesignatedEnemy}}</li>
+        <li>{{rule $.Theme "rules.score.challenges" .Challenge}}</li>
+        <li>{{rule $.Theme "rules.score.manual"}}</li>
     </ul>
     {{end}}
-    <p>{{t "rules.score.relations"}}</p>
-    <p>{{t "rules.score.teams"}}</p>
+    {{with rule $.Theme "rules.score.relations"}}<p>{{.}}</p>{{end}}
+    <p>{{rule $.Theme "rules.score.teams"}}</p>
 </section>
 
 {{end}}
