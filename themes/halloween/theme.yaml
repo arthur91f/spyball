@@ -14,10 +14,10 @@ story: |-
   Ils se ressemblent sans jamais le savoir,
   Et se détestent sans même vouloir se voir !
 
-  Alors naquirent les illuminés,
-  Des **Esprits** les plus fous, des **Infernaux** les plus sensés.
-  Ni dupes ni conciliateurs, ils ont vite deviné
-  Que de ces deux camps de sots, mieux vaut se moquer !
+  Mais parmi les convives rôdent des exorcistes,
+  Grimés en **Esprits**, déguisés en **Infernaux**.
+  Sel en poche et croix dans la manche, ils persistent :
+  Renvoyer chaque créature à son tombeau !
 
 teams:
   blue:
@@ -34,83 +34,106 @@ teams:
       gestuelle hors du commun, dont ils sont fiers et dont ils ont fait leur signature.
 
 traitor:
-  name: Illuminé
-  team: Illuminés
+  name: Exorciste
+  team: Exorcistes
   description: >-
     Tu fais semblant de jouer le jeu, mais tu es là pour exorciser cette maison.
     Exécute tes rites sans te faire repérer.
 
-# Textes de la page Règles propres à ce thème, à la place de ceux de locales/fr.yaml (mêmes clés, sous rules).
-# Les %+d et %d sont remplacés par les points du barème. Un texte vide masque le paragraphe.
-rules:
-  camps:
-    balance: >-
-      Des alliés d'un même camp cherchent à se retrouver pour unir leurs forces et regagner leur monde.
-      Mais sans l'aide des sorciers, la magie ambiante ne suffira pas à ramener tous les convives chez eux.
-    traitors: >-
-      En plus d'être **Esprit** ou **Infernal**, un illuminé cherche à accomplir des missions spécifiques.
-      Pour les **Esprits** et **Infernaux**, ils sont des leurs et comptent comme tels.
-      Mais pour eux, seul le camp des Illuminés compte.
+# Textes du site propres à ce thème, à la place de ceux de locales/fr.yaml (mêmes clés).
+# Les %+d, %d et %s sont remplacés comme dans la locale. Un texte vide de la page Règles masque son paragraphe.
+texts:
+  rules:
+    camps:
+      balance: >-
+        Des alliés d'un même camp cherchent à se retrouver pour unir leurs forces et regagner leur monde.
+        Mais sans l'aide des sorciers, la magie ambiante ne suffira pas à ramener tous les convives chez eux.
+      traitors: >-
+        Sous un costume d'**Esprit** ou d'**Infernal**, un exorciste s'est glissé parmi les convives.
+        Il connaît vos signes et passe pour l'un des vôtres : pour les **Esprits** et les **Infernaux**, il compte comme tel.
+        Mais il ne travaille que pour le camp des Exorcistes : renvoyer tout le monde de l'autre côté.
+    role:
+      character: |-
+        🕯️ Ton personnage
+        Il révèle le camp auquel tu appartiens. Garde-le secret : personne ne doit le découvrir !
+      sign: |-
+        🔮 Ton signe d’appel
+        Un comportement à glisser régulièrement au cours de la soirée pour permettre à tes alliés de te reconnaître. Mais prends garde : si tu le répètes trop souvent, les joueurs les plus attentifs pourraient percer ton secret…
+      clues: |-
+        👁️ Tes visions
+        Quelques informations sur d’autres joueurs : leur camp et leur signe d’appel. Elles t’aideront à reconnaître tes alliés… ou à démasquer tes adversaires. Mais attention : leur personnage reste secret, car il leur sert de mot de passe. Et rien ne t’indique si un joueur est un exorciste !
+      challenges: |-
+        ✨ Les rites des exorcistes
+        Si tu es un exorciste, tu dois accomplir des rites discrètement pendant la soirée, sans éveiller les soupçons. Tous les exorcistes ont les mêmes rites. À la fin de la nuit, l’organisateur révèle ceux qui ont été accomplis : chaque rite réussi rapporte des points au camp des Exorcistes, peu importe qui l’a réalisé.
+      login: |-
+        📜 Découvre ton rôle
+        Connecte-toi au site avec ton nom. Il te révélera ton personnage : mémorise-le bien ! Il te servira de mot de passe pour te reconnecter.
+    party:
+      observe: Observe les autres invités et repère qui fait les signes correspondant à tes indices.
+      reveal: Quand tu penses avoir trouvé un allié, à toi de voir comment te dévoiler.
+    score:
+      ally_found: "%+d points par allié correctement identifié ;"
+      enemy_found: "%+d points par ennemi correctement identifié ;"
+      wrong: "%d points par erreur d'identification ;"
+      designated_ally: "%+d points par joueur qui te désigne comme allié, qu'il ait raison ou non ;"
+      designated_enemy: "%d points par joueur qui te désigne comme ennemi, qu'il ait raison ou non ;"
+      challenges: "%+d points par rite accompli, pour le camp des Exorcistes ;"
+      manual: "des points donnés par l'organisateur : fautes ou bonus ;"
+      relations: ""
+      teams: >-
+        Le score d'un camp est la somme des scores de ses joueurs, exorcistes exclus.
+        Les exorcistes forment leur propre camp. Le score des Exorcistes est la somme de leurs scores individuels,
+        plus les points des rites accomplis. Le camp qui a le plus de points gagne. Un score peut être négatif.
   role:
-    character: |-
-      🕯️ Ton personnage
-      Il révèle le camp auquel tu appartiens. Garde-le secret : personne ne doit le découvrir !
-    sign: |-
-      🔮 Ton signe d’appel
-      Un comportement à glisser régulièrement au cours de la soirée pour permettre à tes alliés de te reconnaître. Mais prends garde : si tu le répètes trop souvent, les joueurs les plus attentifs pourraient percer ton secret…
-    clues: |-
-      👁️ Tes visions
-      Quelques informations sur d’autres joueurs : leur camp et leur signe d’appel. Elles t’aideront à reconnaître tes alliés… ou à démasquer tes adversaires. Mais attention : leur personnage reste secret, car il leur sert de mot de passe. Et rien ne t’indique si un joueur est un illuminé !
-    challenges: |-
-      ✨ Les défis des illuminés
-      Si tu es un illuminé, tu reçois des défis à accomplir discrètement pendant la soirée, sans éveiller les soupçons. Tous les illuminés ont les mêmes défis. À la fin de la nuit, l’organisateur révèle ceux qui ont été accomplis : chaque défi réussi rapporte des points au camp des Illuminés, peu importe qui l’a réalisé.
-    login: |-
-      📜 Découvre ton rôle
-      Connecte-toi au site avec ton nom. Il te révélera ton personnage : mémorise-le bien ! Il te servira de mot de passe pour te reconnecter.
-  party:
-    observe: Observe les autres invités et repère qui fait les signes correspondant à tes indices.
-    reveal: Quand tu penses avoir trouvé un allié, à toi de voir comment te dévoiler.
-  score:
-    ally_found: "%+d points par allié correctement identifié ;"
-    enemy_found: "%+d points par ennemi correctement identifié ;"
-    wrong: "%d points par erreur d'identification ;"
-    designated_ally: "%+d points par joueur qui te désigne comme allié, qu'il ait raison ou non ;"
-    designated_enemy: "%d points par joueur qui te désigne comme ennemi, qu'il ait raison ou non ;"
-    challenges: "%+d points par défi réalisé, pour le camp des Illuminés ;"
-    manual: "des points donnés par l'organisateur : fautes ou bonus ;"
-    relations: ""
-    teams: >-
-      Le score d'un camp est la somme des scores de ses joueurs, illuminés exclus.
-      Les illuminés forment leur propre camp. Le score des Illuminés est la somme de leurs scores individuels,
-      plus les points des défis réalisés. Le camp qui a le plus de points gagne. Un score peut être négatif.
+    traitor_help: >-
+      Pour les alliés et les ennemis, tu passes pour un membre ordinaire de ton camp : c'est ton déguisement.
+      Mais tu as aussi des rites à accomplir, et ton score compte pour le camp des Exorcistes, pas pour ton camp.
+    challenges:
+      title: Tes rites
+      help: >-
+        Les exorcistes ont tous ces rites : accomplissez-les pendant la soirée, sans vous faire repérer.
+        À la fin, l'organisateur indiquera lesquels ont été accomplis : +%d points pour le camp des Exorcistes
+        par rite accompli, quel que soit l'exorciste qui l'a fait. Si tu vois quelqu'un s'y essayer, tu sais à qui tu as affaire.
+  results:
+    teams:
+      members: "%d joueurs, sans les exorcistes"
+      traitors: "%d exorcistes, %d rite(s) accompli(s)"
+    challenges:
+      title: Rites des exorcistes
+      help: "Chaque rite accompli rapporte %d points au camp des Exorcistes."
+  admin:
+    challenges:
+      title: Rites des exorcistes
+      help: "Coche les rites accomplis pendant la soirée, peu importe par quel exorciste : +%d points par rite pour le camp des Exorcistes."
 
+# L'emplacement blue-1 reçoit le premier personnage bleu, etc. : les premiers servent dans toutes les parties.
 characters:
   blue:
-    - name: Morgane
-    - name: Merlin
-    - name: Circé
-    - name: Hécate
-    - name: Cassandre
-    - name: Baba Yaga
-    - name: Mélusine
-    - name: Christ Cosmique
-    - name: Halliwell
-    - name: Salem
-    - name: Sabrina
-    - name: Nostradamus
-  red:
     - name: Casper
-    - name: Monster Munch
-    - name: Fantominus
-    - name: Ankou
     - name: Dame Blanche
+    - name: Fantominus
     - name: Banshee
-    - name: Belzébuth
-    - name: Slenderman
-    - name: Dracula
-    - name: It
     - name: Peeves
-      
+    - name: Feu Follet
+    - name: Mélusine
+    - name: Ankou
+    - name: Ectoplasma
+    - name: Bloody Mary
+    - name: Mimi Geignarde
+    - name: Fée Morgane
+  red:
+    - name: Belzébuth
+    - name: Dracula
+    - name: Lucifer
+    - name: Krampus
+    - name: Lilith
+    - name: Méphisto
+    - name: Slenderman
+    - name: Cerbère
+    - name: It
+    - name: Chucky
+    - name: Monster Munch
+
 signs:
   blue:
     - utiliser des sigles
