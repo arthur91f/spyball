@@ -50,3 +50,6 @@ func (s *Server) handleRules(w http.ResponseWriter, r *http.Request) {
 
 	s.render(w, http.StatusOK, "rules", page)
 }
+
+// textTheme makes the page use the texts of the theme shown, which may not be the one of the game.
+func (p rulesPage) textTheme() *config.Theme { return p.Theme }

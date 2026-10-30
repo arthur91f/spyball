@@ -79,7 +79,7 @@ func TestRulesThemeTexts(t *testing.T) {
 	c := newTestClient(t)
 	other := *c.srv.catalog.Themes["ball-of-nations"]
 	other.ID, other.Name = "other", "Autre thème"
-	other.Rules = map[string]string{
+	other.Texts = map[string]string{
 		"rules.camps.balance":   "Les **Esprits** cherchent leurs alliés <ici>.",
 		"rules.role.character":  "Ton personnage\nGarde-le secret.",
 		"rules.score.wrong":     "%d points par erreur d'identification ;",

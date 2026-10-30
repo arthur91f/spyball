@@ -239,3 +239,15 @@ func TestAdminResetsForgottenCharacter(t *testing.T) {
 		t.Errorf("login with name only after reset landed on %s", resp.Request.URL.Path)
 	}
 }
+
+func TestPagesUseTheTextsOfTheGameTheme(t *testing.T) {
+	admin := startedGame(t)
+	admin.srv.catalog.Themes[admin.game().ThemeID].Texts = map[string]string{"role.title": "Mon déguisement"}
+	p := admin.playerBy(func(p *game.Player) bool { return true })
+
+	player := admin.newPlayerClient()
+	_, body := player.loginPlayer(p.Name, "")
+	if !strings.Contains(body, "Mon déguisement") || strings.Contains(body, "Mon rôle") {
+		t.Errorf("role page does not use the theme's text:\n%s", body)
+	}
+}
