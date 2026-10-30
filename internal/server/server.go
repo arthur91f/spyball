@@ -12,6 +12,8 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"path"
+	"regexp"
+	"strings"
 
 	"github.com/arthur91f/spyball/internal/config"
 	"github.com/arthur91f/spyball/internal/game"
@@ -64,13 +66,7 @@ func New(catalog *config.Catalog, st *store.Store, opts Options) (*Server, error
 		}
 	}
 
-	pages, err := parsePages(web.Templates, template.FuncMap{
-		"t": locale.T,
-		"tf": func(key string, args ...any) (string, error) {
-			msg, err := locale.T(key)
-			return fmt.Sprintf(msg, args...), err
-		},
-	})
+	pages, err := parsePages(web.Templates, textFuncs(locale, nil))
 	if err != nil {
 		return nil, err
 	}
@@ -148,6 +144,23 @@ func parsePages(fsys fs.FS, funcs template.FuncMap) (map[string]*template.Templa
 	return pages, nil
 }
 
+// textFuncs are the template functions that read the texts of the locale, or of the theme if it has its own.
+func textFuncs(locale *config.Locale, theme *config.Theme) template.FuncMap {
+	return template.FuncMap{
+		"t": func(key string) (string, error) { return theme.Text(locale, key) },
+		"tf": func(key string, args ...any) (string, error) {
+			msg, err := theme.Text(locale, key)
+			return fmt.Sprintf(msg, args...), err
+		},
+		"rich": richText,
+	}
+}
+
+// themedPage is page data that shows a theme other than the one of the current game.
+type themedPage interface {
+	textTheme() *config.Theme
+}
+
 // render executes a page into a buffer first, so a template error never sends a half-written page.
 func (s *Server) render(w http.ResponseWriter, status int, page string, data any) {
 	tmpl, ok := s.pages[page]
@@ -157,8 +170,23 @@ func (s *Server) render(w http.ResponseWriter, status int, page string, data any
 		return
 	}
 
+	// The texts are those of the theme shown, else of the current game's. The parsed pages are never executed,
+	// so that they can be cloned with the functions of that theme.
+	var theme *config.Theme
+	if p, ok := data.(themedPage); ok {
+		theme = p.textTheme()
+	} else {
+		_ = s.store.Read(func(g *game.Game) error {
+			theme = s.catalog.Themes[g.ThemeID]
+			return nil
+		})
+	}
+	themed, err := tmpl.Clone()
 	var buf bytes.Buffer
-	if err := tmpl.ExecuteTemplate(&buf, "layout", data); err != nil {
+	if err == nil {
+		err = themed.Funcs(textFuncs(s.locale, theme)).ExecuteTemplate(&buf, "layout", data)
+	}
+	if err != nil {
 		slog.Error("render page", "page", page, "err", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -172,4 +200,12 @@ func (s *Server) render(w http.ResponseWriter, status int, page string, data any
 
 func redirect(w http.ResponseWriter, r *http.Request, url string) {
 	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
+var boldRe = regexp.MustCompile(`\*\*(.+?)\*\*`)
+
+// richText escapes a text written in a YAML file, renders **words** in bold and keeps its line breaks.
+func richText(s string) template.HTML {
+	html := boldRe.ReplaceAllString(template.HTMLEscapeString(s), "<strong>$1</strong>")
+	return template.HTML(strings.ReplaceAll(html, "\n", "<br>"))
 }

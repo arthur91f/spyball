@@ -145,12 +145,13 @@ func playFullGame(t *testing.T, setupID string) {
 				want[g.name] += 2
 			case n < 8:
 				guess = opposite
+				want[g.name] -= 2
 			}
 			switch guess {
 			case "ally":
-				want[other.name]++
+				want[other.name] += 3
 			case "enemy":
-				want[other.name] -= 2
+				want[other.name] -= 5
 			}
 			form.Set("guess_"+id, guess)
 			n++

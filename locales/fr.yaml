@@ -118,8 +118,8 @@ rules:
     title: Le décompte des points
     ally_found: "%+d points par allié que tu désignes comme allié ;"
     enemy_found: "%+d points par ennemi que tu désignes comme ennemi ;"
-    wrong: "%d point par erreur (allié désigné comme ennemi ou ennemi désigné comme allié) ;"
-    designated_ally: "%+d point par joueur qui te désigne comme allié, qu'il ait raison ou non ;"
+    wrong: "%d points par erreur (allié désigné comme ennemi ou ennemi désigné comme allié) ;"
+    designated_ally: "%+d points par joueur qui te désigne comme allié, qu'il ait raison ou non ;"
     designated_enemy: "%d points par joueur qui te désigne comme ennemi, qu'il ait raison ou non ;"
     challenges: "%+d points par défi réalisé, pour le camp des traîtres ;"
     manual: "des points donnés par l'organisateur : dénonciations publiques…"

@@ -66,6 +66,22 @@ func Load(fsys fs.FS) (*Catalog, error) {
 		}
 	}
 
+	// A theme may only replace texts that exist, to catch typos in its keys.
+	for id, theme := range c.Themes {
+		if theme == nil {
+			continue
+		}
+		for key := range theme.Texts {
+			for _, l := range c.Locales {
+				if l != nil {
+					if _, err := l.T(key); err != nil {
+						errs = append(errs, fmt.Errorf("themes/%s/theme.yaml: texts: unknown text %q", id, key))
+					}
+				}
+			}
+		}
+	}
+
 	if len(c.Themes) == 0 {
 		errs = append(errs, errors.New("no theme found in themes/*/theme.yaml"))
 	}

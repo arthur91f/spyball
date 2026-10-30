@@ -1,29 +1,37 @@
-# Thème Halloween : la nuit où s'ouvre le passage entre le monde réel et celui des esprits.
+# Thème Halloween : la nuit où s'ouvrent le monde des Esprits et celui des Infernaux.
 # Format commenté dans themes/ball-of-nations/theme.yaml. Les signes sont ceux du thème d'origine.
+# Dans les textes, **mot** s'affiche en gras.
 
-name: La nuit des esprits
-story: >-
-  Le soir d'Halloween, un passage s'ouvre entre le monde réel et celui des esprits. Les sorciers et sorcières
-  païens profitent de cette nuit pour invoquer les esprits et les forces infernales. Mais sorciers et êtres
-  d'outre-monde doivent se reconnaître pour regagner chacun leur monde avant la fin de ce cycle.
+name: La nuit des Esprits
+story: |-
+  À Halloween, deux mondes s’ouvrent dans la nuit :
+  Celui des **Infernaux**, celui des **Esprits**.
+  Les sorciers les invoquent au milieu des fumées,
+  Puis trinquent à leur venue jusqu’à tout oublier !
 
-  Attention : des fanatiques, embrumés par l'obscurantisme de l'Église, se sont glissés parmi vous et cherchent
-  à saboter cette nuit en exécutant des rites d'exorcisme ! Pauvres fous ! Ils ne feront qu'empêcher le retour
-  des différents êtres dans leur monde.
+  Les **Esprits** rient et jouent des tours la nuit,
+  Les **Infernaux** sèment partout le chaos.
+  Ils se ressemblent sans jamais le savoir,
+  Et se détestent sans même vouloir se voir !
+
+  Mais parmi les convives rôdent des exorcistes,
+  Grimés en **Esprits**, déguisés en **Infernaux**.
+  Sel en poche et croix dans la manche, ils persistent :
+  Renvoyer chaque créature à son tombeau !
 
 teams:
   blue:
-    name: Cultistes païens
-    member: cultiste
+    name: Esprits
+    member: Esprit
     description: >-
-      Sorciers et sorcières se reconnaissent par la parole : traquez les tics de langage
-      et les drôles de façons de s'exprimer.
+      Ayant passé leur existence à exprimer et promouvoir leur sagesse, ils ont appris à se reconnaître
+      par les mots et tout ce qui peut s'y cacher.
   red:
-    name: Esprits et êtres infernaux
-    member: esprit
+    name: Infernaux
+    member: Infernal
     description: >-
-      Venus de l'outre-monde, ils communiquent par gestes :
-      soyez attentifs aux postures, mimiques et manies étranges.
+      Leur habitude de posséder et de communiquer sur de « longues distances » leur confère une habileté
+      gestuelle hors du commun, dont ils sont fiers et dont ils ont fait leur signature.
 
 traitor:
   name: Exorciste
@@ -32,33 +40,100 @@ traitor:
     Tu fais semblant de jouer le jeu, mais tu es là pour exorciser cette maison.
     Exécute tes rites sans te faire repérer.
 
+# Textes du site propres à ce thème, à la place de ceux de locales/fr.yaml (mêmes clés).
+# Les %+d, %d et %s sont remplacés comme dans la locale. Un texte vide de la page Règles masque son paragraphe.
+texts:
+  rules:
+    camps:
+      balance: >-
+        Des alliés d'un même camp cherchent à se retrouver pour unir leurs forces et regagner leur monde.
+        Mais sans l'aide des sorciers, la magie ambiante ne suffira pas à ramener tous les convives chez eux.
+      traitors: >-
+        Sous un costume d'**Esprit** ou d'**Infernal**, un exorciste s'est glissé parmi les convives.
+        Il connaît vos signes et passe pour l'un des vôtres : pour les **Esprits** et les **Infernaux**, il compte comme tel.
+        Mais il ne travaille que pour le camp des Exorcistes : renvoyer tout le monde de l'autre côté.
+    role:
+      character: |-
+        🕯️ Ton personnage
+        Il révèle le camp auquel tu appartiens. Garde-le secret : personne ne doit le découvrir !
+      sign: |-
+        🔮 Ton signe d’appel
+        Un comportement à glisser régulièrement au cours de la soirée pour permettre à tes alliés de te reconnaître. Mais prends garde : si tu le répètes trop souvent, les joueurs les plus attentifs pourraient percer ton secret…
+      clues: |-
+        👁️ Tes visions
+        Quelques informations sur d’autres joueurs : leur camp et leur signe d’appel. Elles t’aideront à reconnaître tes alliés… ou à démasquer tes adversaires. Mais attention : leur personnage reste secret, car il leur sert de mot de passe. Et rien ne t’indique si un joueur est un exorciste !
+      challenges: |-
+        ✨ Les rites des exorcistes
+        Si tu es un exorciste, tu dois accomplir des rites discrètement pendant la soirée, sans éveiller les soupçons. Tous les exorcistes ont les mêmes rites. À la fin de la nuit, l’organisateur révèle ceux qui ont été accomplis : chaque rite réussi rapporte des points au camp des Exorcistes, peu importe qui l’a réalisé.
+      login: |-
+        📜 Découvre ton rôle
+        Connecte-toi au site avec ton nom. Il te révélera ton personnage : mémorise-le bien ! Il te servira de mot de passe pour te reconnecter.
+    party:
+      observe: Observe les autres invités et repère qui fait les signes correspondant à tes indices.
+      reveal: Quand tu penses avoir trouvé un allié, à toi de voir comment te dévoiler.
+    score:
+      ally_found: "%+d points par allié correctement identifié ;"
+      enemy_found: "%+d points par ennemi correctement identifié ;"
+      wrong: "%d points par erreur d'identification ;"
+      designated_ally: "%+d points par joueur qui te désigne comme allié, qu'il ait raison ou non ;"
+      designated_enemy: "%d points par joueur qui te désigne comme ennemi, qu'il ait raison ou non ;"
+      challenges: "%+d points par rite accompli, pour le camp des Exorcistes ;"
+      manual: "des points donnés par l'organisateur : fautes ou bonus ;"
+      relations: ""
+      teams: >-
+        Le score d'un camp est la somme des scores de ses joueurs, exorcistes exclus.
+        Les exorcistes forment leur propre camp. Le score des Exorcistes est la somme de leurs scores individuels,
+        plus les points des rites accomplis. Le camp qui a le plus de points gagne. Un score peut être négatif.
+  role:
+    traitor_help: >-
+      Pour les alliés et les ennemis, tu passes pour un membre ordinaire de ton camp : c'est ton déguisement.
+      Mais tu as aussi des rites à accomplir, et ton score compte pour le camp des Exorcistes, pas pour ton camp.
+    challenges:
+      title: Tes rites
+      help: >-
+        Les exorcistes ont tous ces rites : accomplissez-les pendant la soirée, sans vous faire repérer.
+        À la fin, l'organisateur indiquera lesquels ont été accomplis : +%d points pour le camp des Exorcistes
+        par rite accompli, quel que soit l'exorciste qui l'a fait. Si tu vois quelqu'un s'y essayer, tu sais à qui tu as affaire.
+  results:
+    teams:
+      members: "%d joueurs, sans les exorcistes"
+      traitors: "%d exorcistes, %d rite(s) accompli(s)"
+    challenges:
+      title: Rites des exorcistes
+      help: "Chaque rite accompli rapporte %d points au camp des Exorcistes."
+  admin:
+    challenges:
+      title: Rites des exorcistes
+      help: "Coche les rites accomplis pendant la soirée, peu importe par quel exorciste : +%d points par rite pour le camp des Exorcistes."
+
+# L'emplacement blue-1 reçoit le premier personnage bleu, etc. : les premiers servent dans toutes les parties.
 characters:
   blue:
-    - name: Morgane
-    - name: Merlin
-    - name: Circé
-    - name: Hécate
-    - name: Cassandre
-    - name: Baba Yaga
-    - name: Mélusine
-    - name: Christ Cosmique
-    - name: Halliwell
-    - name: Salem
-    - name: Sabrina
-    - name: Nostradamus
-  red:
     - name: Casper
-    - name: Monster Munch
-    - name: Fantominus
-    - name: Ankou
     - name: Dame Blanche
+    - name: Fantominus
     - name: Banshee
-    - name: Belzébuth
-    - name: Slenderman
-    - name: Dracula
-    - name: It
     - name: Peeves
-      
+    - name: Feu Follet
+    - name: Mélusine
+    - name: Ankou
+    - name: Ectoplasma
+    - name: Bloody Mary
+    - name: Mimi Geignarde
+    - name: Fée Morgane
+  red:
+    - name: Belzébuth
+    - name: Dracula
+    - name: Lucifer
+    - name: Krampus
+    - name: Lilith
+    - name: Méphisto
+    - name: Slenderman
+    - name: Cerbère
+    - name: It
+    - name: Chucky
+    - name: Monster Munch
+
 signs:
   blue:
     - utiliser des sigles

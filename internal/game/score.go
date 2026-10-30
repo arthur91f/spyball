@@ -5,16 +5,16 @@ import "github.com/arthur91f/spyball/internal/config"
 // The scoring rules, kept together so they are easy to revise.
 const (
 	// Points earned by the player who makes a guess.
-	PointsAllyFound  = 2 // an ally guessed as an ally
-	PointsEnemyFound = 2 // an enemy guessed as an enemy
-	PointsWrongGuess = 0 // an ally guessed as an enemy, or an enemy as an ally
+	PointsAllyFound  = 2  // an ally guessed as an ally
+	PointsEnemyFound = 2  // an enemy guessed as an enemy
+	PointsWrongGuess = -2 // an ally guessed as an enemy, or an enemy as an ally
 
 	// Points earned by the player a guess is about, whoever makes it and whether it is right or not.
-	PointsDesignatedAlly  = 1  // guessed as an ally
-	PointsDesignatedEnemy = -2 // guessed as an enemy
+	PointsDesignatedAlly  = 3  // guessed as an ally
+	PointsDesignatedEnemy = -5 // guessed as an enemy
 
 	// PointsChallenge is earned by the traitors' camp for each challenge done, whoever did it.
-	PointsChallenge = 4
+	PointsChallenge = 10
 )
 
 // PlayerScore details the score of one player.

@@ -18,6 +18,8 @@ type Theme struct {
 	Signs      map[Color][]string // placeholders already replaced
 	// Challenges are what traitors try to make other players do; placeholders already replaced.
 	Challenges []string
+	// Texts replaces texts of the locale, keyed like it ("rules.camps.balance").
+	Texts map[string]string
 }
 
 // Team is the themed name of a color.
@@ -48,6 +50,7 @@ type themeFile struct {
 	Characters map[Color][]Character `yaml:"characters"`
 	Signs      map[Color][]string    `yaml:"signs"`
 	Challenges []string              `yaml:"challenges"`
+	Texts      map[string]any        `yaml:"texts"`
 }
 
 var placeholderRe = regexp.MustCompile(`\{[^}]*\}`)
@@ -107,6 +110,13 @@ func newTheme(id string, f themeFile) (*Theme, error) {
 		t.Signs[color] = t.textList(fmt.Sprintf("signs.%s", color), "sign", signs, seen, &errs)
 	}
 	t.Challenges = t.textList("challenges", "challenge", f.Challenges, map[string]bool{}, &errs)
+
+	if f.Texts != nil {
+		t.Texts = map[string]string{}
+		if err := flatten(t.Texts, "", f.Texts); err != nil {
+			errs = append(errs, fmt.Errorf("texts: %w", err))
+		}
+	}
 
 	if err := errors.Join(errs...); err != nil {
 		return nil, err
@@ -172,4 +182,14 @@ func (t *Theme) Cast(s *Setup) (map[SlotID]Character, error) {
 		return nil, err
 	}
 	return cast, nil
+}
+
+// Text returns the text of a locale key: the theme's own if it has one, else the locale's. t may be nil.
+func (t *Theme) Text(l *Locale, key string) (string, error) {
+	if t != nil {
+		if text, ok := t.Texts[key]; ok {
+			return text, nil
+		}
+	}
+	return l.T(key)
 }

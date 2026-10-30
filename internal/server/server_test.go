@@ -1,7 +1,6 @@
 package server
 
 import (
-	"html/template"
 	"io"
 	"io/fs"
 	"math/rand/v2"
@@ -144,13 +143,15 @@ func TestMissingTranslationFailsRender(t *testing.T) {
 		"templates/layout.html":       {Data: []byte(`{{define "layout"}}{{block "content" .}}{{end}}{{end}}`)},
 		"templates/pages/broken.html": {Data: []byte(`{{define "content"}}{{t "no.such.key"}}{{end}}`)},
 	}
-	pages, err := parsePages(fsys, template.FuncMap{"t": catalog.Locales["fr"].T})
+	pages, err := parsePages(fsys, textFuncs(catalog.Locales["fr"], nil))
 	if err != nil {
 		t.Fatalf("parsePages: %v", err)
 	}
+	srv := newTestServer(t)
+	srv.pages = pages
 
 	rec := httptest.NewRecorder()
-	(&Server{pages: pages}).render(rec, http.StatusOK, "broken", nil)
+	srv.render(rec, http.StatusOK, "broken", nil)
 	if rec.Code != http.StatusInternalServerError {
 		t.Errorf("status = %d, want 500", rec.Code)
 	}
