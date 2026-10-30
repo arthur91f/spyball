@@ -12,6 +12,8 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"path"
+	"regexp"
+	"strings"
 
 	"github.com/arthur91f/spyball/internal/config"
 	"github.com/arthur91f/spyball/internal/game"
@@ -69,6 +71,16 @@ func New(catalog *config.Catalog, st *store.Store, opts Options) (*Server, error
 		"tf": func(key string, args ...any) (string, error) {
 			msg, err := locale.T(key)
 			return fmt.Sprintf(msg, args...), err
+		},
+		"rich": richText,
+		// rule is a text of the rules page, from the theme if it has its own: {{rule $.Theme "rules.camps.title"}}.
+		"rule": func(theme *config.Theme, key string, args ...any) (template.HTML, error) {
+			msg, err := theme.RuleText(locale, key)
+			if len(args) > 0 {
+				msg = fmt.Sprintf(msg, args...)
+			}
+			// A line break in a theme text is kept.
+			return template.HTML(strings.ReplaceAll(string(richText(msg)), "\n", "<br>")), err
 		},
 	})
 	if err != nil {
@@ -172,4 +184,11 @@ func (s *Server) render(w http.ResponseWriter, status int, page string, data any
 
 func redirect(w http.ResponseWriter, r *http.Request, url string) {
 	http.Redirect(w, r, url, http.StatusSeeOther)
+}
+
+var boldRe = regexp.MustCompile(`\*\*(.+?)\*\*`)
+
+// richText escapes a text written in a YAML file and renders **words** in bold.
+func richText(s string) template.HTML {
+	return template.HTML(boldRe.ReplaceAllString(template.HTMLEscapeString(s), "<strong>$1</strong>"))
 }
