@@ -1,36 +1,88 @@
-# Thème Halloween : la nuit où s'ouvre le passage entre le monde réel et celui des esprits.
+# Thème Halloween : la nuit où s'ouvrent le monde des Esprits et celui des Infernaux.
 # Format commenté dans themes/ball-of-nations/theme.yaml. Les signes sont ceux du thème d'origine.
+# Dans les textes, **mot** s'affiche en gras.
 
-name: La nuit des esprits
-story: >-
-  Le soir d'Halloween, un passage s'ouvre entre le monde réel et celui des esprits. Les sorciers et sorcières
-  païens profitent de cette nuit pour invoquer les esprits et les forces infernales. Mais sorciers et êtres
-  d'outre-monde doivent se reconnaître pour regagner chacun leur monde avant la fin de ce cycle.
+name: La nuit des Esprits
+story: |-
+  À Halloween, deux mondes s’ouvrent dans la nuit :
+  Celui des **Infernaux**, celui des **Esprits**.
+  Les sorciers les invoquent au milieu des fumées,
+  Puis trinquent à leur venue jusqu’à tout oublier !
 
-  Attention : des fanatiques, embrumés par l'obscurantisme de l'Église, se sont glissés parmi vous et cherchent
-  à saboter cette nuit en exécutant des rites d'exorcisme ! Pauvres fous ! Ils ne feront qu'empêcher le retour
-  des différents êtres dans leur monde.
+  Les **Esprits** rient et jouent des tours la nuit,
+  Les **Infernaux** sèment partout le chaos.
+  Ils se ressemblent sans jamais le savoir,
+  Et se détestent sans même vouloir se voir !
+
+  Alors naquirent les illuminés,
+  Des **Esprits** les plus fous, des **Infernaux** les plus sensés.
+  Ni dupes ni conciliateurs, ils ont vite deviné
+  Que de ces deux camps de sots, mieux vaut se moquer !
 
 teams:
   blue:
-    name: Cultistes païens
-    member: cultiste
+    name: Esprits
+    member: Esprit
     description: >-
-      Sorciers et sorcières se reconnaissent par la parole : traquez les tics de langage
-      et les drôles de façons de s'exprimer.
+      Ayant passé leur existence à exprimer et promouvoir leur sagesse, ils ont appris à se reconnaître
+      par les mots et tout ce qui peut s'y cacher.
   red:
-    name: Esprits et êtres infernaux
-    member: esprit
+    name: Infernaux
+    member: Infernal
     description: >-
-      Venus de l'outre-monde, ils communiquent par gestes :
-      soyez attentifs aux postures, mimiques et manies étranges.
+      Leur habitude de posséder et de communiquer sur de « longues distances » leur confère une habileté
+      gestuelle hors du commun, dont ils sont fiers et dont ils ont fait leur signature.
 
 traitor:
-  name: Exorciste
-  team: Exorcistes
+  name: Illuminé
+  team: Illuminés
   description: >-
     Tu fais semblant de jouer le jeu, mais tu es là pour exorciser cette maison.
     Exécute tes rites sans te faire repérer.
+
+# Textes de la page Règles propres à ce thème, à la place de ceux de locales/fr.yaml (mêmes clés, sous rules).
+# Les %+d et %d sont remplacés par les points du barème. Un texte vide masque le paragraphe.
+rules:
+  camps:
+    balance: >-
+      Des alliés d'un même camp cherchent à se retrouver pour unir leurs forces et regagner leur monde.
+      Mais sans l'aide des sorciers, la magie ambiante ne suffira pas à ramener tous les convives chez eux.
+    traitors: >-
+      En plus d'être **Esprit** ou **Infernal**, un illuminé cherche à accomplir des missions spécifiques.
+      Pour les **Esprits** et **Infernaux**, ils sont des leurs et comptent comme tels.
+      Mais pour eux, seul le camp des Illuminés compte.
+  role:
+    character: |-
+      🕯️ Ton personnage
+      Il révèle le camp auquel tu appartiens. Garde-le secret : personne ne doit le découvrir !
+    sign: |-
+      🔮 Ton signe d’appel
+      Un comportement à glisser régulièrement au cours de la soirée pour permettre à tes alliés de te reconnaître. Mais prends garde : si tu le répètes trop souvent, les joueurs les plus attentifs pourraient percer ton secret…
+    clues: |-
+      👁️ Tes visions
+      Quelques informations sur d’autres joueurs : leur camp et leur signe d’appel. Elles t’aideront à reconnaître tes alliés… ou à démasquer tes adversaires. Mais attention : leur personnage reste secret, car il leur sert de mot de passe. Et rien ne t’indique si un joueur est un illuminé !
+    challenges: |-
+      ✨ Les défis des illuminés
+      Si tu es un illuminé, tu reçois des défis à accomplir discrètement pendant la soirée, sans éveiller les soupçons. Tous les illuminés ont les mêmes défis. À la fin de la nuit, l’organisateur révèle ceux qui ont été accomplis : chaque défi réussi rapporte des points au camp des Illuminés, peu importe qui l’a réalisé.
+    login: |-
+      📜 Découvre ton rôle
+      Connecte-toi au site avec ton nom. Il te révélera ton personnage : mémorise-le bien ! Il te servira de mot de passe pour te reconnecter.
+  party:
+    observe: Observe les autres invités et repère qui fait les signes correspondant à tes indices.
+    reveal: Quand tu penses avoir trouvé un allié, à toi de voir comment te dévoiler.
+  score:
+    ally_found: "%+d points par allié correctement identifié ;"
+    enemy_found: "%+d points par ennemi correctement identifié ;"
+    wrong: "%d points par erreur d'identification ;"
+    designated_ally: "%+d points par joueur qui te désigne comme allié, qu'il ait raison ou non ;"
+    designated_enemy: "%d points par joueur qui te désigne comme ennemi, qu'il ait raison ou non ;"
+    challenges: "%+d points par défi réalisé, pour le camp des Illuminés ;"
+    manual: "des points donnés par l'organisateur : fautes ou bonus ;"
+    relations: ""
+    teams: >-
+      Le score d'un camp est la somme des scores de ses joueurs, illuminés exclus.
+      Les illuminés forment leur propre camp. Le score des Illuminés est la somme de leurs scores individuels,
+      plus les points des défis réalisés. Le camp qui a le plus de points gagne. Un score peut être négatif.
 
 characters:
   blue:
