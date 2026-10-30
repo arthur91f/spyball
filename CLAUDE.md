@@ -96,8 +96,9 @@ clôturée, quel que soit le traître qui l'a fait). Les trois camps sont class�
 
 **Règles** (`/rules`, lien dans l'en-tête de chaque page) : texte générique dans `rules.*` de la locale, habillé par
 le thème (récit `story`, noms et descriptions des camps, nom des traîtres). Thème affiché : `?theme=<id>`, sinon
-celui de la partie, sinon le premier. Un thème peut remplacer des textes `rules.*` par les siens (`rules:` du thème,
-`Theme.RuleText`, fonction de template `rule`) ; `**mot**` s'affiche en gras dans ces textes et ceux du thème (`rich`).
+celui de la partie, sinon le premier. Un thème peut remplacer n'importe quel texte de la locale par le sien (`texts:` du thème,
+`Theme.Text`) : `t` et `tf` lisent les textes du thème de la partie (ou du thème affiché sur la page Règles).
+`**mot**` s'affiche en gras et les retours à la ligne sont gardés là où le template passe le texte à `rich`.
 
 **Résultats** (`/results`) : visibles par tous une fois la partie clôturée (avant, la page dit seulement d'attendre).
 Classement des camps (gagnant mis en avant ; les couleurs sans leurs traîtres, puis le camp des traîtres), classement de tous les joueurs

@@ -97,7 +97,7 @@ challenges:            # défis des traîtres ; {red}, {blue} : le « member » 
   - faire chanter le refrain d'une chanson de Noël à un {blue}
 ```
 
-Un thème peut aussi avoir ses propres textes pour la page Règles : sous `rules:`, il reprend les clés de `rules` de `locales/fr.yaml` qu'il veut remplacer (voir `themes/halloween/theme.yaml`) ; un texte vide masque le paragraphe. Dans les textes des thèmes, `**mot**` s'affiche en gras.
+Un thème peut aussi avoir ses propres textes : sous `texts:`, il reprend les clés de `locales/fr.yaml` qu'il veut remplacer, sur toutes les pages (voir `themes/halloween/theme.yaml`) ; un texte vide de la page Règles masque son paragraphe. Dans les textes des thèmes, `**mot**` s'affiche en gras.
 
 Au démarrage, le serveur vérifie tous les fichiers et refuse de démarrer en listant les erreurs : champ inconnu, nom de
 personnage en double, pas assez de personnages, de signes ou de défis pour une configuration… Pour essayer un thème sans
